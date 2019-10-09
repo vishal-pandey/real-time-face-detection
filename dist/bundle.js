@@ -25,7 +25,7 @@ window.onload = function () {
 	console.log(faceapi.nets);
 	video.addEventListener('play', function () {
 		var canvas = faceapi.createCanvasFromMedia(video);
-		document.body.append(canvas);
+		document.querySelector(".content").append(canvas);
 		var displaysize = { width: video.width, height: video.height };
 		faceapi.matchDimensions(canvas, displaysize);
 		setInterval(async function () {
