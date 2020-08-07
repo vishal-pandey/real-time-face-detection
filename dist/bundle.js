@@ -7,7 +7,9 @@ var faceapi = _interopRequireWildcard(_faceApi);
 
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
-Promise.all([faceapi.nets.tinyFaceDetector.loadFromUri('/models'), faceapi.nets.faceLandmark68Net.loadFromUri('/models'), faceapi.nets.faceRecognitionNet.loadFromUri('/models'), faceapi.nets.faceExpressionNet.loadFromUri('/models')]).then(startVideo);
+Promise.all([faceapi.nets.tinyFaceDetector.loadFromUri('/models'), faceapi.nets.faceLandmark68Net.loadFromUri('/models'), faceapi.nets.faceRecognitionNet.loadFromUri('/models'),
+// faceapi.nets.faceExpressionNet.loadFromUri('/models'),
+faceapi.nets.ageGenderNet.loadFromUri('/models')]).then(startVideo);
 
 function startVideo() {
 	var video = document.querySelector('#video');
@@ -29,18 +31,24 @@ window.onload = function () {
 		var displaysize = { width: video.width, height: video.height };
 		faceapi.matchDimensions(canvas, displaysize);
 		setInterval(async function () {
-			var detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceExpressions();
+			var detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withAgeAndGender();
 			// console.log(detections)
 			var resizedDetections = faceapi.resizeResults(detections, displaysize);
 			canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
 			faceapi.draw.drawDetections(canvas, resizedDetections);
-			faceapi.draw.drawFaceLandmarks(canvas, resizedDetections);
-			faceapi.draw.drawFaceExpressions(canvas, resizedDetections);
-		}, 100);
+			// faceapi.draw.drawFaceLandmarks(canvas, resizedDetections)
+			resizedDetections.forEach(function (result) {
+				var age = result.age,
+				    gender = result.gender,
+				    genderProbability = result.genderProbability;
+
+				new faceapi.draw.DrawTextField([faceapi.utils.round(age, 0) + ' years', gender + ' (' + faceapi.utils.round(genderProbability) + ')'], result.detection.box.bottomLeft).draw(canvas);
+			});
+		}, 1000);
 	});
 };
 
-},{"face-api.js":270}],2:[function(require,module,exports){
+},{"face-api.js":315}],2:[function(require,module,exports){
 "use strict";
 /**
  * @license
@@ -3963,7 +3971,7 @@ var MathBackendCPU = /** @class */ (function () {
 exports.MathBackendCPU = MathBackendCPU;
 engine_1.ENGINE.registerBackend('cpu', function () { return new MathBackendCPU(); }, 1 /* priority */);
 
-},{"../../engine":95,"../../environment":96,"../../log":113,"../../ops/array_ops_util":116,"../../ops/axis_util":117,"../../ops/broadcast_util":121,"../../ops/complex_ops":124,"../../ops/concat_util":126,"../../ops/erf_util":133,"../../ops/gather_nd_util":136,"../../ops/ops":148,"../../ops/scatter_nd_util":156,"../../ops/selu_util":159,"../../ops/slice_util":162,"../../tensor":186,"../../types":192,"../../util":193,"../backend":2,"../backend_util":3,"../complex_util":4,"../non_max_suppression_impl":6,"../split_shared":8,"../tile_impl":9,"../topk_impl":10,"../where_impl":92,"seedrandom":316}],6:[function(require,module,exports){
+},{"../../engine":95,"../../environment":96,"../../log":113,"../../ops/array_ops_util":116,"../../ops/axis_util":117,"../../ops/broadcast_util":121,"../../ops/complex_ops":124,"../../ops/concat_util":126,"../../ops/erf_util":133,"../../ops/gather_nd_util":136,"../../ops/ops":148,"../../ops/scatter_nd_util":156,"../../ops/selu_util":159,"../../ops/slice_util":162,"../../tensor":186,"../../types":192,"../../util":193,"../backend":2,"../backend_util":3,"../complex_util":4,"../non_max_suppression_impl":6,"../split_shared":8,"../tile_impl":9,"../topk_impl":10,"../where_impl":92,"seedrandom":376}],6:[function(require,module,exports){
 "use strict";
 /**
  * @license
@@ -12967,7 +12975,7 @@ function nextFrame() {
 exports.nextFrame = nextFrame;
 
 }).call(this,require("timers").setImmediate)
-},{"timers":391}],94:[function(require,module,exports){
+},{"timers":384}],94:[function(require,module,exports){
 "use strict";
 /**
  * @license
@@ -13858,7 +13866,7 @@ function getOrMakeEngine() {
 exports.ENGINE = getOrMakeEngine();
 
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./environment":96,"./profiler":183,"./tape":185,"./tensor":186,"./tensor_util":188,"./util":193,"_process":315}],96:[function(require,module,exports){
+},{"./environment":96,"./profiler":183,"./tape":185,"./tensor":186,"./tensor_util":188,"./util":193,"_process":375}],96:[function(require,module,exports){
 "use strict";
 /**
  * @license
@@ -14063,7 +14071,7 @@ environment_1.ENV.registerFlag('DEPRECATION_WARNINGS_ENABLED', function () { ret
 environment_1.ENV.registerFlag('IS_TEST', function () { return false; });
 
 }).call(this,require('_process'))
-},{"./device_util":94,"./environment":96,"_process":315}],98:[function(require,module,exports){
+},{"./device_util":94,"./environment":96,"_process":375}],98:[function(require,module,exports){
 "use strict";
 /**
  * @license
@@ -25952,7 +25960,7 @@ var UniformRandom = /** @class */ (function () {
 }());
 exports.UniformRandom = UniformRandom;
 
-},{"seedrandom":316}],151:[function(require,module,exports){
+},{"seedrandom":376}],151:[function(require,module,exports){
 "use strict";
 /**
  * @license
@@ -31643,7 +31651,7 @@ if (environment_1.ENV.get('IS_NODE')) {
 }
 
 }).call(this,require('_process'))
-},{"../environment":96,"_process":315,"node-fetch":197,"util":197}],183:[function(require,module,exports){
+},{"../environment":96,"_process":375,"node-fetch":197,"util":197}],183:[function(require,module,exports){
 "use strict";
 /**
  * @license
@@ -36633,18 +36641,198 @@ var hexSliceLookupTable = (function () {
 })()
 
 }).call(this,require("buffer").Buffer)
-},{"base64-js":196,"buffer":199,"ieee754":314}],200:[function(require,module,exports){
+},{"base64-js":196,"buffer":199,"ieee754":374}],200:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
 var tf = require("@tensorflow/tfjs-core");
-var tfjs_image_recognition_base_1 = require("tfjs-image-recognition-base");
+var getModelUris_1 = require("./common/getModelUris");
+var dom_1 = require("./dom");
+var env_1 = require("./env");
+var NeuralNetwork = /** @class */ (function () {
+    function NeuralNetwork(_name) {
+        this._name = _name;
+        this._params = undefined;
+        this._paramMappings = [];
+    }
+    Object.defineProperty(NeuralNetwork.prototype, "params", {
+        get: function () { return this._params; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(NeuralNetwork.prototype, "paramMappings", {
+        get: function () { return this._paramMappings; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(NeuralNetwork.prototype, "isLoaded", {
+        get: function () { return !!this.params; },
+        enumerable: true,
+        configurable: true
+    });
+    NeuralNetwork.prototype.getParamFromPath = function (paramPath) {
+        var _a = this.traversePropertyPath(paramPath), obj = _a.obj, objProp = _a.objProp;
+        return obj[objProp];
+    };
+    NeuralNetwork.prototype.reassignParamFromPath = function (paramPath, tensor) {
+        var _a = this.traversePropertyPath(paramPath), obj = _a.obj, objProp = _a.objProp;
+        obj[objProp].dispose();
+        obj[objProp] = tensor;
+    };
+    NeuralNetwork.prototype.getParamList = function () {
+        var _this = this;
+        return this._paramMappings.map(function (_a) {
+            var paramPath = _a.paramPath;
+            return ({
+                path: paramPath,
+                tensor: _this.getParamFromPath(paramPath)
+            });
+        });
+    };
+    NeuralNetwork.prototype.getTrainableParams = function () {
+        return this.getParamList().filter(function (param) { return param.tensor instanceof tf.Variable; });
+    };
+    NeuralNetwork.prototype.getFrozenParams = function () {
+        return this.getParamList().filter(function (param) { return !(param.tensor instanceof tf.Variable); });
+    };
+    NeuralNetwork.prototype.variable = function () {
+        var _this = this;
+        this.getFrozenParams().forEach(function (_a) {
+            var path = _a.path, tensor = _a.tensor;
+            _this.reassignParamFromPath(path, tensor.variable());
+        });
+    };
+    NeuralNetwork.prototype.freeze = function () {
+        var _this = this;
+        this.getTrainableParams().forEach(function (_a) {
+            var path = _a.path, variable = _a.tensor;
+            var tensor = tf.tensor(variable.dataSync());
+            variable.dispose();
+            _this.reassignParamFromPath(path, tensor);
+        });
+    };
+    NeuralNetwork.prototype.dispose = function (throwOnRedispose) {
+        if (throwOnRedispose === void 0) { throwOnRedispose = true; }
+        this.getParamList().forEach(function (param) {
+            if (throwOnRedispose && param.tensor.isDisposed) {
+                throw new Error("param tensor has already been disposed for path " + param.path);
+            }
+            param.tensor.dispose();
+        });
+        this._params = undefined;
+    };
+    NeuralNetwork.prototype.serializeParams = function () {
+        return new Float32Array(this.getParamList()
+            .map(function (_a) {
+            var tensor = _a.tensor;
+            return Array.from(tensor.dataSync());
+        })
+            .reduce(function (flat, arr) { return flat.concat(arr); }));
+    };
+    NeuralNetwork.prototype.load = function (weightsOrUrl) {
+        return tslib_1.__awaiter(this, void 0, void 0, function () {
+            return tslib_1.__generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        if (weightsOrUrl instanceof Float32Array) {
+                            this.extractWeights(weightsOrUrl);
+                            return [2 /*return*/];
+                        }
+                        return [4 /*yield*/, this.loadFromUri(weightsOrUrl)];
+                    case 1:
+                        _a.sent();
+                        return [2 /*return*/];
+                }
+            });
+        });
+    };
+    NeuralNetwork.prototype.loadFromUri = function (uri) {
+        return tslib_1.__awaiter(this, void 0, void 0, function () {
+            var weightMap;
+            return tslib_1.__generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        if (uri && typeof uri !== 'string') {
+                            throw new Error(this._name + ".loadFromUri - expected model uri");
+                        }
+                        return [4 /*yield*/, dom_1.loadWeightMap(uri, this.getDefaultModelName())];
+                    case 1:
+                        weightMap = _a.sent();
+                        this.loadFromWeightMap(weightMap);
+                        return [2 /*return*/];
+                }
+            });
+        });
+    };
+    NeuralNetwork.prototype.loadFromDisk = function (filePath) {
+        return tslib_1.__awaiter(this, void 0, void 0, function () {
+            var readFile, _a, manifestUri, modelBaseUri, fetchWeightsFromDisk, loadWeights, manifest, _b, _c, weightMap;
+            return tslib_1.__generator(this, function (_d) {
+                switch (_d.label) {
+                    case 0:
+                        if (filePath && typeof filePath !== 'string') {
+                            throw new Error(this._name + ".loadFromDisk - expected model file path");
+                        }
+                        readFile = env_1.env.getEnv().readFile;
+                        _a = getModelUris_1.getModelUris(filePath, this.getDefaultModelName()), manifestUri = _a.manifestUri, modelBaseUri = _a.modelBaseUri;
+                        fetchWeightsFromDisk = function (filePaths) { return Promise.all(filePaths.map(function (filePath) { return readFile(filePath).then(function (buf) { return buf.buffer; }); })); };
+                        loadWeights = tf.io.weightsLoaderFactory(fetchWeightsFromDisk);
+                        _c = (_b = JSON).parse;
+                        return [4 /*yield*/, readFile(manifestUri)];
+                    case 1:
+                        manifest = _c.apply(_b, [(_d.sent()).toString()]);
+                        return [4 /*yield*/, loadWeights(manifest, modelBaseUri)];
+                    case 2:
+                        weightMap = _d.sent();
+                        this.loadFromWeightMap(weightMap);
+                        return [2 /*return*/];
+                }
+            });
+        });
+    };
+    NeuralNetwork.prototype.loadFromWeightMap = function (weightMap) {
+        var _a = this.extractParamsFromWeigthMap(weightMap), paramMappings = _a.paramMappings, params = _a.params;
+        this._paramMappings = paramMappings;
+        this._params = params;
+    };
+    NeuralNetwork.prototype.extractWeights = function (weights) {
+        var _a = this.extractParams(weights), paramMappings = _a.paramMappings, params = _a.params;
+        this._paramMappings = paramMappings;
+        this._params = params;
+    };
+    NeuralNetwork.prototype.traversePropertyPath = function (paramPath) {
+        if (!this.params) {
+            throw new Error("traversePropertyPath - model has no loaded params");
+        }
+        var result = paramPath.split('/').reduce(function (res, objProp) {
+            if (!res.nextObj.hasOwnProperty(objProp)) {
+                throw new Error("traversePropertyPath - object does not have property " + objProp + ", for path " + paramPath);
+            }
+            return { obj: res.nextObj, objProp: objProp, nextObj: res.nextObj[objProp] };
+        }, { nextObj: this.params });
+        var obj = result.obj, objProp = result.objProp;
+        if (!obj || !objProp || !(obj[objProp] instanceof tf.Tensor)) {
+            throw new Error("traversePropertyPath - parameter is not a tensor, for path " + paramPath);
+        }
+        return { obj: obj, objProp: objProp };
+    };
+    return NeuralNetwork;
+}());
+exports.NeuralNetwork = NeuralNetwork;
+
+},{"./common/getModelUris":230,"./dom":248,"./env":265,"@tensorflow/tfjs-core":100,"tslib":385}],201:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var tslib_1 = require("tslib");
+var tf = require("@tensorflow/tfjs-core");
 var fullyConnectedLayer_1 = require("../common/fullyConnectedLayer");
 var util_1 = require("../faceProcessor/util");
 var TinyXception_1 = require("../xception/TinyXception");
 var extractParams_1 = require("./extractParams");
 var extractParamsFromWeigthMap_1 = require("./extractParamsFromWeigthMap");
 var types_1 = require("./types");
+var NeuralNetwork_1 = require("../NeuralNetwork");
+var dom_1 = require("../dom");
 var AgeGenderNet = /** @class */ (function (_super) {
     tslib_1.__extends(AgeGenderNet, _super);
     function AgeGenderNet(faceFeatureExtractor) {
@@ -36667,7 +36855,7 @@ var AgeGenderNet = /** @class */ (function (_super) {
             throw new Error(this._name + " - load model before inference");
         }
         return tf.tidy(function () {
-            var bottleneckFeatures = input instanceof tfjs_image_recognition_base_1.NetInput
+            var bottleneckFeatures = input instanceof dom_1.NetInput
                 ? _this.faceFeatureExtractor.forwardInput(input)
                 : input;
             var pooled = tf.avgPool(bottleneckFeatures, [7, 7], [2, 2], 'valid').as2D(bottleneckFeatures.shape[0], -1);
@@ -36690,7 +36878,7 @@ var AgeGenderNet = /** @class */ (function (_super) {
                 switch (_b.label) {
                     case 0:
                         _a = this.forwardInput;
-                        return [4 /*yield*/, tfjs_image_recognition_base_1.toNetInput(input)];
+                        return [4 /*yield*/, dom_1.toNetInput(input)];
                     case 1: return [2 /*return*/, _a.apply(this, [_b.sent()])];
                 }
             });
@@ -36702,7 +36890,7 @@ var AgeGenderNet = /** @class */ (function (_super) {
             var _this = this;
             return tslib_1.__generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0: return [4 /*yield*/, tfjs_image_recognition_base_1.toNetInput(input)];
+                    case 0: return [4 /*yield*/, dom_1.toNetInput(input)];
                     case 1:
                         netInput = _a.sent();
                         return [4 /*yield*/, this.forwardInput(netInput)];
@@ -36776,17 +36964,17 @@ var AgeGenderNet = /** @class */ (function (_super) {
         return this.extractClassifierParams(classifierWeights);
     };
     return AgeGenderNet;
-}(tfjs_image_recognition_base_1.NeuralNetwork));
+}(NeuralNetwork_1.NeuralNetwork));
 exports.AgeGenderNet = AgeGenderNet;
 
-},{"../common/fullyConnectedLayer":213,"../faceProcessor/util":243,"../xception/TinyXception":311,"./extractParams":201,"./extractParamsFromWeigthMap":202,"./types":204,"@tensorflow/tfjs-core":100,"tfjs-image-recognition-base":372,"tslib":392}],201:[function(require,module,exports){
+},{"../NeuralNetwork":200,"../common/fullyConnectedLayer":229,"../dom":248,"../faceProcessor/util":288,"../xception/TinyXception":371,"./extractParams":202,"./extractParamsFromWeigthMap":203,"./types":205,"@tensorflow/tfjs-core":100,"tslib":385}],202:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-var tfjs_image_recognition_base_1 = require("tfjs-image-recognition-base");
+var common_1 = require("../common");
 function extractParams(weights) {
     var paramMappings = [];
-    var _a = tfjs_image_recognition_base_1.TfjsImageRecognitionBase.extractWeightsFactory(weights), extractWeights = _a.extractWeights, getRemainingWeights = _a.getRemainingWeights;
-    var extractFCParams = tfjs_image_recognition_base_1.TfjsImageRecognitionBase.extractFCParamsFactory(extractWeights, paramMappings);
+    var _a = common_1.extractWeightsFactory(weights), extractWeights = _a.extractWeights, getRemainingWeights = _a.getRemainingWeights;
+    var extractFCParams = common_1.extractFCParamsFactory(extractWeights, paramMappings);
     var age = extractFCParams(512, 1, 'fc/age');
     var gender = extractFCParams(512, 2, 'fc/gender');
     if (getRemainingWeights().length !== 0) {
@@ -36799,13 +36987,13 @@ function extractParams(weights) {
 }
 exports.extractParams = extractParams;
 
-},{"tfjs-image-recognition-base":372}],202:[function(require,module,exports){
+},{"../common":231}],203:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-var tfjs_image_recognition_base_1 = require("tfjs-image-recognition-base");
+var common_1 = require("../common");
 function extractParamsFromWeigthMap(weightMap) {
     var paramMappings = [];
-    var extractWeightEntry = tfjs_image_recognition_base_1.TfjsImageRecognitionBase.extractWeightEntryFactory(weightMap, paramMappings);
+    var extractWeightEntry = common_1.extractWeightEntryFactory(weightMap, paramMappings);
     function extractFcParams(prefix) {
         var weights = extractWeightEntry(prefix + "/weights", 2);
         var bias = extractWeightEntry(prefix + "/bias", 1);
@@ -36817,19 +37005,19 @@ function extractParamsFromWeigthMap(weightMap) {
             gender: extractFcParams('fc/gender')
         }
     };
-    tfjs_image_recognition_base_1.TfjsImageRecognitionBase.disposeUnusedWeightTensors(weightMap, paramMappings);
+    common_1.disposeUnusedWeightTensors(weightMap, paramMappings);
     return { params: params, paramMappings: paramMappings };
 }
 exports.extractParamsFromWeigthMap = extractParamsFromWeigthMap;
 
-},{"tfjs-image-recognition-base":372}],203:[function(require,module,exports){
+},{"../common":231}],204:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
 tslib_1.__exportStar(require("./AgeGenderNet"), exports);
 tslib_1.__exportStar(require("./types"), exports);
 
-},{"./AgeGenderNet":200,"./types":204,"tslib":392}],204:[function(require,module,exports){
+},{"./AgeGenderNet":201,"./types":205,"tslib":385}],205:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var Gender;
@@ -36838,11 +37026,254 @@ var Gender;
     Gender["MALE"] = "male";
 })(Gender = exports.Gender || (exports.Gender = {}));
 
-},{}],205:[function(require,module,exports){
+},{}],206:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
-var tfjs_image_recognition_base_1 = require("tfjs-image-recognition-base");
+var Box_1 = require("./Box");
+var BoundingBox = /** @class */ (function (_super) {
+    tslib_1.__extends(BoundingBox, _super);
+    function BoundingBox(left, top, right, bottom, allowNegativeDimensions) {
+        if (allowNegativeDimensions === void 0) { allowNegativeDimensions = false; }
+        return _super.call(this, { left: left, top: top, right: right, bottom: bottom }, allowNegativeDimensions) || this;
+    }
+    return BoundingBox;
+}(Box_1.Box));
+exports.BoundingBox = BoundingBox;
+
+},{"./Box":207,"tslib":385}],207:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var utils_1 = require("../utils");
+var Point_1 = require("./Point");
+var Box = /** @class */ (function () {
+    function Box(_box, allowNegativeDimensions) {
+        if (allowNegativeDimensions === void 0) { allowNegativeDimensions = true; }
+        var box = (_box || {});
+        var isBbox = [box.left, box.top, box.right, box.bottom].every(utils_1.isValidNumber);
+        var isRect = [box.x, box.y, box.width, box.height].every(utils_1.isValidNumber);
+        if (!isRect && !isBbox) {
+            throw new Error("Box.constructor - expected box to be IBoundingBox | IRect, instead have " + JSON.stringify(box));
+        }
+        var _a = isRect
+            ? [box.x, box.y, box.width, box.height]
+            : [box.left, box.top, box.right - box.left, box.bottom - box.top], x = _a[0], y = _a[1], width = _a[2], height = _a[3];
+        Box.assertIsValidBox({ x: x, y: y, width: width, height: height }, 'Box.constructor', allowNegativeDimensions);
+        this._x = x;
+        this._y = y;
+        this._width = width;
+        this._height = height;
+    }
+    Box.isRect = function (rect) {
+        return !!rect && [rect.x, rect.y, rect.width, rect.height].every(utils_1.isValidNumber);
+    };
+    Box.assertIsValidBox = function (box, callee, allowNegativeDimensions) {
+        if (allowNegativeDimensions === void 0) { allowNegativeDimensions = false; }
+        if (!Box.isRect(box)) {
+            throw new Error(callee + " - invalid box: " + JSON.stringify(box) + ", expected object with properties x, y, width, height");
+        }
+        if (!allowNegativeDimensions && (box.width < 0 || box.height < 0)) {
+            throw new Error(callee + " - width (" + box.width + ") and height (" + box.height + ") must be positive numbers");
+        }
+    };
+    Object.defineProperty(Box.prototype, "x", {
+        get: function () { return this._x; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Box.prototype, "y", {
+        get: function () { return this._y; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Box.prototype, "width", {
+        get: function () { return this._width; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Box.prototype, "height", {
+        get: function () { return this._height; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Box.prototype, "left", {
+        get: function () { return this.x; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Box.prototype, "top", {
+        get: function () { return this.y; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Box.prototype, "right", {
+        get: function () { return this.x + this.width; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Box.prototype, "bottom", {
+        get: function () { return this.y + this.height; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Box.prototype, "area", {
+        get: function () { return this.width * this.height; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Box.prototype, "topLeft", {
+        get: function () { return new Point_1.Point(this.left, this.top); },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Box.prototype, "topRight", {
+        get: function () { return new Point_1.Point(this.right, this.top); },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Box.prototype, "bottomLeft", {
+        get: function () { return new Point_1.Point(this.left, this.bottom); },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Box.prototype, "bottomRight", {
+        get: function () { return new Point_1.Point(this.right, this.bottom); },
+        enumerable: true,
+        configurable: true
+    });
+    Box.prototype.round = function () {
+        var _a = [this.x, this.y, this.width, this.height]
+            .map(function (val) { return Math.round(val); }), x = _a[0], y = _a[1], width = _a[2], height = _a[3];
+        return new Box({ x: x, y: y, width: width, height: height });
+    };
+    Box.prototype.floor = function () {
+        var _a = [this.x, this.y, this.width, this.height]
+            .map(function (val) { return Math.floor(val); }), x = _a[0], y = _a[1], width = _a[2], height = _a[3];
+        return new Box({ x: x, y: y, width: width, height: height });
+    };
+    Box.prototype.toSquare = function () {
+        var _a = this, x = _a.x, y = _a.y, width = _a.width, height = _a.height;
+        var diff = Math.abs(width - height);
+        if (width < height) {
+            x -= (diff / 2);
+            width += diff;
+        }
+        if (height < width) {
+            y -= (diff / 2);
+            height += diff;
+        }
+        return new Box({ x: x, y: y, width: width, height: height });
+    };
+    Box.prototype.rescale = function (s) {
+        var scaleX = utils_1.isDimensions(s) ? s.width : s;
+        var scaleY = utils_1.isDimensions(s) ? s.height : s;
+        return new Box({
+            x: this.x * scaleX,
+            y: this.y * scaleY,
+            width: this.width * scaleX,
+            height: this.height * scaleY
+        });
+    };
+    Box.prototype.pad = function (padX, padY) {
+        var _a = [
+            this.x - (padX / 2),
+            this.y - (padY / 2),
+            this.width + padX,
+            this.height + padY
+        ], x = _a[0], y = _a[1], width = _a[2], height = _a[3];
+        return new Box({ x: x, y: y, width: width, height: height });
+    };
+    Box.prototype.clipAtImageBorders = function (imgWidth, imgHeight) {
+        var _a = this, x = _a.x, y = _a.y, right = _a.right, bottom = _a.bottom;
+        var clippedX = Math.max(x, 0);
+        var clippedY = Math.max(y, 0);
+        var newWidth = right - clippedX;
+        var newHeight = bottom - clippedY;
+        var clippedWidth = Math.min(newWidth, imgWidth - clippedX);
+        var clippedHeight = Math.min(newHeight, imgHeight - clippedY);
+        return (new Box({ x: clippedX, y: clippedY, width: clippedWidth, height: clippedHeight })).floor();
+    };
+    Box.prototype.shift = function (sx, sy) {
+        var _a = this, width = _a.width, height = _a.height;
+        var x = this.x + sx;
+        var y = this.y + sy;
+        return new Box({ x: x, y: y, width: width, height: height });
+    };
+    Box.prototype.padAtBorders = function (imageHeight, imageWidth) {
+        var w = this.width + 1;
+        var h = this.height + 1;
+        var dx = 1;
+        var dy = 1;
+        var edx = w;
+        var edy = h;
+        var x = this.left;
+        var y = this.top;
+        var ex = this.right;
+        var ey = this.bottom;
+        if (ex > imageWidth) {
+            edx = -ex + imageWidth + w;
+            ex = imageWidth;
+        }
+        if (ey > imageHeight) {
+            edy = -ey + imageHeight + h;
+            ey = imageHeight;
+        }
+        if (x < 1) {
+            edy = 2 - x;
+            x = 1;
+        }
+        if (y < 1) {
+            edy = 2 - y;
+            y = 1;
+        }
+        return { dy: dy, edy: edy, dx: dx, edx: edx, y: y, ey: ey, x: x, ex: ex, w: w, h: h };
+    };
+    Box.prototype.calibrate = function (region) {
+        return new Box({
+            left: this.left + (region.left * this.width),
+            top: this.top + (region.top * this.height),
+            right: this.right + (region.right * this.width),
+            bottom: this.bottom + (region.bottom * this.height)
+        }).toSquare().round();
+    };
+    return Box;
+}());
+exports.Box = Box;
+
+},{"../utils":370,"./Point":217}],208:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var utils_1 = require("../utils");
+var Dimensions = /** @class */ (function () {
+    function Dimensions(width, height) {
+        if (!utils_1.isValidNumber(width) || !utils_1.isValidNumber(height)) {
+            throw new Error("Dimensions.constructor - expected width and height to be valid numbers, instead have " + JSON.stringify({ width: width, height: height }));
+        }
+        this._width = width;
+        this._height = height;
+    }
+    Object.defineProperty(Dimensions.prototype, "width", {
+        get: function () { return this._width; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Dimensions.prototype, "height", {
+        get: function () { return this._height; },
+        enumerable: true,
+        configurable: true
+    });
+    Dimensions.prototype.reverse = function () {
+        return new Dimensions(1 / this.width, 1 / this.height);
+    };
+    return Dimensions;
+}());
+exports.Dimensions = Dimensions;
+
+},{"../utils":370}],209:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var tslib_1 = require("tslib");
+var ObjectDetection_1 = require("./ObjectDetection");
 var FaceDetection = /** @class */ (function (_super) {
     tslib_1.__extends(FaceDetection, _super);
     function FaceDetection(score, relativeBox, imageDims) {
@@ -36853,29 +37284,33 @@ var FaceDetection = /** @class */ (function (_super) {
         return new FaceDetection(score, relativeBox, imageDims);
     };
     return FaceDetection;
-}(tfjs_image_recognition_base_1.ObjectDetection));
+}(ObjectDetection_1.ObjectDetection));
 exports.FaceDetection = FaceDetection;
 
-},{"tfjs-image-recognition-base":372,"tslib":392}],206:[function(require,module,exports){
+},{"./ObjectDetection":216,"tslib":385}],210:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-var tfjs_image_recognition_base_1 = require("tfjs-image-recognition-base");
-var minBbox_1 = require("../minBbox");
+var ops_1 = require("../ops");
+var utils_1 = require("../utils");
+var Box_1 = require("./Box");
+var Dimensions_1 = require("./Dimensions");
 var FaceDetection_1 = require("./FaceDetection");
+var Point_1 = require("./Point");
+var Rect_1 = require("./Rect");
 // face alignment constants
 var relX = 0.5;
 var relY = 0.43;
 var relScale = 0.45;
 var FaceLandmarks = /** @class */ (function () {
     function FaceLandmarks(relativeFaceLandmarkPositions, imgDims, shift) {
-        if (shift === void 0) { shift = new tfjs_image_recognition_base_1.Point(0, 0); }
+        if (shift === void 0) { shift = new Point_1.Point(0, 0); }
         var width = imgDims.width, height = imgDims.height;
-        this._imgDims = new tfjs_image_recognition_base_1.Dimensions(width, height);
+        this._imgDims = new Dimensions_1.Dimensions(width, height);
         this._shift = shift;
-        this._positions = relativeFaceLandmarkPositions.map(function (pt) { return pt.mul(new tfjs_image_recognition_base_1.Point(width, height)).add(shift); });
+        this._positions = relativeFaceLandmarkPositions.map(function (pt) { return pt.mul(new Point_1.Point(width, height)).add(shift); });
     }
     Object.defineProperty(FaceLandmarks.prototype, "shift", {
-        get: function () { return new tfjs_image_recognition_base_1.Point(this._shift.x, this._shift.y); },
+        get: function () { return new Point_1.Point(this._shift.x, this._shift.y); },
         enumerable: true,
         configurable: true
     });
@@ -36897,7 +37332,7 @@ var FaceLandmarks = /** @class */ (function () {
     Object.defineProperty(FaceLandmarks.prototype, "relativePositions", {
         get: function () {
             var _this = this;
-            return this._positions.map(function (pt) { return pt.sub(_this._shift).div(new tfjs_image_recognition_base_1.Point(_this.imageWidth, _this.imageHeight)); });
+            return this._positions.map(function (pt) { return pt.sub(_this._shift).div(new Point_1.Point(_this.imageWidth, _this.imageHeight)); });
         },
         enumerable: true,
         configurable: true
@@ -36906,7 +37341,7 @@ var FaceLandmarks = /** @class */ (function () {
         return new this.constructor(this.relativePositions, { width: width, height: height });
     };
     FaceLandmarks.prototype.shiftBy = function (x, y) {
-        return new this.constructor(this.relativePositions, this._imgDims, new tfjs_image_recognition_base_1.Point(x, y));
+        return new this.constructor(this.relativePositions, this._imgDims, new Point_1.Point(x, y));
     };
     FaceLandmarks.prototype.shiftByPoint = function (pt) {
         return this.shiftBy(pt.x, pt.y);
@@ -36927,7 +37362,7 @@ var FaceLandmarks = /** @class */ (function () {
         if (detection) {
             var box = detection instanceof FaceDetection_1.FaceDetection
                 ? detection.box.floor()
-                : new tfjs_image_recognition_base_1.Box(detection);
+                : new Box_1.Box(detection);
             return this.shiftBy(box.x, box.y).align(null, options);
         }
         var _a = Object.assign({}, { useDlibAlignment: false, minBoxPadding: 0.2 }, options), useDlibAlignment = _a.useDlibAlignment, minBoxPadding = _a.minBoxPadding;
@@ -36942,14 +37377,14 @@ var FaceLandmarks = /** @class */ (function () {
         var distToMouth = function (pt) { return mouthCenter.sub(pt).magnitude(); };
         var eyeToMouthDist = (distToMouth(leftEyeCenter) + distToMouth(rightEyeCenter)) / 2;
         var size = Math.floor(eyeToMouthDist / relScale);
-        var refPoint = tfjs_image_recognition_base_1.getCenterPoint(centers);
+        var refPoint = utils_1.getCenterPoint(centers);
         // TODO: pad in case rectangle is out of image bounds
         var x = Math.floor(Math.max(0, refPoint.x - (relX * size)));
         var y = Math.floor(Math.max(0, refPoint.y - (relY * size)));
-        return new tfjs_image_recognition_base_1.Rect(x, y, Math.min(size, this.imageWidth + x), Math.min(size, this.imageHeight + y));
+        return new Rect_1.Rect(x, y, Math.min(size, this.imageWidth + x), Math.min(size, this.imageHeight + y));
     };
     FaceLandmarks.prototype.alignMinBbox = function (padding) {
-        var box = minBbox_1.minBbox(this.positions);
+        var box = ops_1.minBbox(this.positions);
         return box.pad(box.width * padding, box.height * padding);
     };
     FaceLandmarks.prototype.getRefPointsForAlignment = function () {
@@ -36959,11 +37394,11 @@ var FaceLandmarks = /** @class */ (function () {
 }());
 exports.FaceLandmarks = FaceLandmarks;
 
-},{"../minBbox":271,"./FaceDetection":205,"tfjs-image-recognition-base":372}],207:[function(require,module,exports){
+},{"../ops":336,"../utils":370,"./Box":207,"./Dimensions":208,"./FaceDetection":209,"./Point":217,"./Rect":219}],211:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
-var tfjs_image_recognition_base_1 = require("tfjs-image-recognition-base");
+var utils_1 = require("../utils");
 var FaceLandmarks_1 = require("./FaceLandmarks");
 var FaceLandmarks5 = /** @class */ (function (_super) {
     tslib_1.__extends(FaceLandmarks5, _super);
@@ -36975,19 +37410,19 @@ var FaceLandmarks5 = /** @class */ (function (_super) {
         return [
             pts[0],
             pts[1],
-            tfjs_image_recognition_base_1.getCenterPoint([pts[3], pts[4]])
+            utils_1.getCenterPoint([pts[3], pts[4]])
         ];
     };
     return FaceLandmarks5;
 }(FaceLandmarks_1.FaceLandmarks));
 exports.FaceLandmarks5 = FaceLandmarks5;
 
-},{"./FaceLandmarks":206,"tfjs-image-recognition-base":372,"tslib":392}],208:[function(require,module,exports){
+},{"../utils":370,"./FaceLandmarks":210,"tslib":385}],212:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
-var tfjs_image_recognition_base_1 = require("tfjs-image-recognition-base");
-var FaceLandmarks_1 = require("../classes/FaceLandmarks");
+var utils_1 = require("../utils");
+var FaceLandmarks_1 = require("./FaceLandmarks");
 var FaceLandmarks68 = /** @class */ (function (_super) {
     tslib_1.__extends(FaceLandmarks68, _super);
     function FaceLandmarks68() {
@@ -37019,16 +37454,16 @@ var FaceLandmarks68 = /** @class */ (function (_super) {
             this.getLeftEye(),
             this.getRightEye(),
             this.getMouth()
-        ].map(tfjs_image_recognition_base_1.getCenterPoint);
+        ].map(utils_1.getCenterPoint);
     };
     return FaceLandmarks68;
 }(FaceLandmarks_1.FaceLandmarks));
 exports.FaceLandmarks68 = FaceLandmarks68;
 
-},{"../classes/FaceLandmarks":206,"tfjs-image-recognition-base":372,"tslib":392}],209:[function(require,module,exports){
+},{"../utils":370,"./FaceLandmarks":210,"tslib":385}],213:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-var tfjs_image_recognition_base_1 = require("tfjs-image-recognition-base");
+var utils_1 = require("../utils");
 var FaceMatch = /** @class */ (function () {
     function FaceMatch(label, distance) {
         this._label = label;
@@ -37046,13 +37481,41 @@ var FaceMatch = /** @class */ (function () {
     });
     FaceMatch.prototype.toString = function (withDistance) {
         if (withDistance === void 0) { withDistance = true; }
-        return "" + this.label + (withDistance ? " (" + tfjs_image_recognition_base_1.round(this.distance) + ")" : '');
+        return "" + this.label + (withDistance ? " (" + utils_1.round(this.distance) + ")" : '');
     };
     return FaceMatch;
 }());
 exports.FaceMatch = FaceMatch;
 
-},{"tfjs-image-recognition-base":372}],210:[function(require,module,exports){
+},{"../utils":370}],214:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var tslib_1 = require("tslib");
+var utils_1 = require("../utils");
+var Box_1 = require("./Box");
+var LabeledBox = /** @class */ (function (_super) {
+    tslib_1.__extends(LabeledBox, _super);
+    function LabeledBox(box, label) {
+        var _this = _super.call(this, box) || this;
+        _this._label = label;
+        return _this;
+    }
+    LabeledBox.assertIsValidLabeledBox = function (box, callee) {
+        Box_1.Box.assertIsValidBox(box, callee);
+        if (!utils_1.isValidNumber(box.label)) {
+            throw new Error(callee + " - expected property label (" + box.label + ") to be a number");
+        }
+    };
+    Object.defineProperty(LabeledBox.prototype, "label", {
+        get: function () { return this._label; },
+        enumerable: true,
+        configurable: true
+    });
+    return LabeledBox;
+}(Box_1.Box));
+exports.LabeledBox = LabeledBox;
+
+},{"../utils":370,"./Box":207,"tslib":385}],215:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var LabeledFaceDescriptors = /** @class */ (function () {
@@ -37092,18 +37555,193 @@ var LabeledFaceDescriptors = /** @class */ (function () {
 }());
 exports.LabeledFaceDescriptors = LabeledFaceDescriptors;
 
-},{}],211:[function(require,module,exports){
+},{}],216:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var Box_1 = require("./Box");
+var Dimensions_1 = require("./Dimensions");
+var ObjectDetection = /** @class */ (function () {
+    function ObjectDetection(score, classScore, className, relativeBox, imageDims) {
+        this._imageDims = new Dimensions_1.Dimensions(imageDims.width, imageDims.height);
+        this._score = score;
+        this._classScore = classScore;
+        this._className = className;
+        this._box = new Box_1.Box(relativeBox).rescale(this._imageDims);
+    }
+    Object.defineProperty(ObjectDetection.prototype, "score", {
+        get: function () { return this._score; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(ObjectDetection.prototype, "classScore", {
+        get: function () { return this._classScore; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(ObjectDetection.prototype, "className", {
+        get: function () { return this._className; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(ObjectDetection.prototype, "box", {
+        get: function () { return this._box; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(ObjectDetection.prototype, "imageDims", {
+        get: function () { return this._imageDims; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(ObjectDetection.prototype, "imageWidth", {
+        get: function () { return this.imageDims.width; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(ObjectDetection.prototype, "imageHeight", {
+        get: function () { return this.imageDims.height; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(ObjectDetection.prototype, "relativeBox", {
+        get: function () { return new Box_1.Box(this._box).rescale(this.imageDims.reverse()); },
+        enumerable: true,
+        configurable: true
+    });
+    ObjectDetection.prototype.forSize = function (width, height) {
+        return new ObjectDetection(this.score, this.classScore, this.className, this.relativeBox, { width: width, height: height });
+    };
+    return ObjectDetection;
+}());
+exports.ObjectDetection = ObjectDetection;
+
+},{"./Box":207,"./Dimensions":208}],217:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var Point = /** @class */ (function () {
+    function Point(x, y) {
+        this._x = x;
+        this._y = y;
+    }
+    Object.defineProperty(Point.prototype, "x", {
+        get: function () { return this._x; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Point.prototype, "y", {
+        get: function () { return this._y; },
+        enumerable: true,
+        configurable: true
+    });
+    Point.prototype.add = function (pt) {
+        return new Point(this.x + pt.x, this.y + pt.y);
+    };
+    Point.prototype.sub = function (pt) {
+        return new Point(this.x - pt.x, this.y - pt.y);
+    };
+    Point.prototype.mul = function (pt) {
+        return new Point(this.x * pt.x, this.y * pt.y);
+    };
+    Point.prototype.div = function (pt) {
+        return new Point(this.x / pt.x, this.y / pt.y);
+    };
+    Point.prototype.abs = function () {
+        return new Point(Math.abs(this.x), Math.abs(this.y));
+    };
+    Point.prototype.magnitude = function () {
+        return Math.sqrt(Math.pow(this.x, 2) + Math.pow(this.y, 2));
+    };
+    Point.prototype.floor = function () {
+        return new Point(Math.floor(this.x), Math.floor(this.y));
+    };
+    return Point;
+}());
+exports.Point = Point;
+
+},{}],218:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
+var utils_1 = require("../utils");
+var LabeledBox_1 = require("./LabeledBox");
+var PredictedBox = /** @class */ (function (_super) {
+    tslib_1.__extends(PredictedBox, _super);
+    function PredictedBox(box, label, score, classScore) {
+        var _this = _super.call(this, box, label) || this;
+        _this._score = score;
+        _this._classScore = classScore;
+        return _this;
+    }
+    PredictedBox.assertIsValidPredictedBox = function (box, callee) {
+        LabeledBox_1.LabeledBox.assertIsValidLabeledBox(box, callee);
+        if (!utils_1.isValidProbablitiy(box.score)
+            || !utils_1.isValidProbablitiy(box.classScore)) {
+            throw new Error(callee + " - expected properties score (" + box.score + ") and (" + box.classScore + ") to be a number between [0, 1]");
+        }
+    };
+    Object.defineProperty(PredictedBox.prototype, "score", {
+        get: function () { return this._score; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(PredictedBox.prototype, "classScore", {
+        get: function () { return this._classScore; },
+        enumerable: true,
+        configurable: true
+    });
+    return PredictedBox;
+}(LabeledBox_1.LabeledBox));
+exports.PredictedBox = PredictedBox;
+
+},{"../utils":370,"./LabeledBox":214,"tslib":385}],219:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var tslib_1 = require("tslib");
+var Box_1 = require("./Box");
+var Rect = /** @class */ (function (_super) {
+    tslib_1.__extends(Rect, _super);
+    function Rect(x, y, width, height, allowNegativeDimensions) {
+        if (allowNegativeDimensions === void 0) { allowNegativeDimensions = false; }
+        return _super.call(this, { x: x, y: y, width: width, height: height }, allowNegativeDimensions) || this;
+    }
+    return Rect;
+}(Box_1.Box));
+exports.Rect = Rect;
+
+},{"./Box":207,"tslib":385}],220:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var tslib_1 = require("tslib");
+tslib_1.__exportStar(require("./BoundingBox"), exports);
+tslib_1.__exportStar(require("./Box"), exports);
+tslib_1.__exportStar(require("./Dimensions"), exports);
 tslib_1.__exportStar(require("./FaceDetection"), exports);
 tslib_1.__exportStar(require("./FaceLandmarks"), exports);
 tslib_1.__exportStar(require("./FaceLandmarks5"), exports);
 tslib_1.__exportStar(require("./FaceLandmarks68"), exports);
 tslib_1.__exportStar(require("./FaceMatch"), exports);
+tslib_1.__exportStar(require("./LabeledBox"), exports);
 tslib_1.__exportStar(require("./LabeledFaceDescriptors"), exports);
+tslib_1.__exportStar(require("./ObjectDetection"), exports);
+tslib_1.__exportStar(require("./Point"), exports);
+tslib_1.__exportStar(require("./PredictedBox"), exports);
+tslib_1.__exportStar(require("./Rect"), exports);
 
-},{"./FaceDetection":205,"./FaceLandmarks":206,"./FaceLandmarks5":207,"./FaceLandmarks68":208,"./FaceMatch":209,"./LabeledFaceDescriptors":210,"tslib":392}],212:[function(require,module,exports){
+},{"./BoundingBox":206,"./Box":207,"./Dimensions":208,"./FaceDetection":209,"./FaceLandmarks":210,"./FaceLandmarks5":211,"./FaceLandmarks68":212,"./FaceMatch":213,"./LabeledBox":214,"./LabeledFaceDescriptors":215,"./ObjectDetection":216,"./Point":217,"./PredictedBox":218,"./Rect":219,"tslib":385}],221:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var tf = require("@tensorflow/tfjs-core");
+function convLayer(x, params, padding, withRelu) {
+    if (padding === void 0) { padding = 'same'; }
+    if (withRelu === void 0) { withRelu = false; }
+    return tf.tidy(function () {
+        var out = tf.add(tf.conv2d(x, params.filters, [1, 1], padding), params.bias);
+        return withRelu ? tf.relu(out) : out;
+    });
+}
+exports.convLayer = convLayer;
+
+},{"@tensorflow/tfjs-core":100}],222:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tf = require("@tensorflow/tfjs-core");
@@ -37116,7 +37754,111 @@ function depthwiseSeparableConv(x, params, stride) {
 }
 exports.depthwiseSeparableConv = depthwiseSeparableConv;
 
-},{"@tensorflow/tfjs-core":100}],213:[function(require,module,exports){
+},{"@tensorflow/tfjs-core":100}],223:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+function disposeUnusedWeightTensors(weightMap, paramMappings) {
+    Object.keys(weightMap).forEach(function (path) {
+        if (!paramMappings.some(function (pm) { return pm.originalPath === path; })) {
+            weightMap[path].dispose();
+        }
+    });
+}
+exports.disposeUnusedWeightTensors = disposeUnusedWeightTensors;
+
+},{}],224:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var tf = require("@tensorflow/tfjs-core");
+function extractConvParamsFactory(extractWeights, paramMappings) {
+    return function (channelsIn, channelsOut, filterSize, mappedPrefix) {
+        var filters = tf.tensor4d(extractWeights(channelsIn * channelsOut * filterSize * filterSize), [filterSize, filterSize, channelsIn, channelsOut]);
+        var bias = tf.tensor1d(extractWeights(channelsOut));
+        paramMappings.push({ paramPath: mappedPrefix + "/filters" }, { paramPath: mappedPrefix + "/bias" });
+        return { filters: filters, bias: bias };
+    };
+}
+exports.extractConvParamsFactory = extractConvParamsFactory;
+
+},{"@tensorflow/tfjs-core":100}],225:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var tf = require("@tensorflow/tfjs-core");
+function extractFCParamsFactory(extractWeights, paramMappings) {
+    return function (channelsIn, channelsOut, mappedPrefix) {
+        var fc_weights = tf.tensor2d(extractWeights(channelsIn * channelsOut), [channelsIn, channelsOut]);
+        var fc_bias = tf.tensor1d(extractWeights(channelsOut));
+        paramMappings.push({ paramPath: mappedPrefix + "/weights" }, { paramPath: mappedPrefix + "/bias" });
+        return {
+            weights: fc_weights,
+            bias: fc_bias
+        };
+    };
+}
+exports.extractFCParamsFactory = extractFCParamsFactory;
+
+},{"@tensorflow/tfjs-core":100}],226:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var tf = require("@tensorflow/tfjs-core");
+var types_1 = require("./types");
+function extractSeparableConvParamsFactory(extractWeights, paramMappings) {
+    return function (channelsIn, channelsOut, mappedPrefix) {
+        var depthwise_filter = tf.tensor4d(extractWeights(3 * 3 * channelsIn), [3, 3, channelsIn, 1]);
+        var pointwise_filter = tf.tensor4d(extractWeights(channelsIn * channelsOut), [1, 1, channelsIn, channelsOut]);
+        var bias = tf.tensor1d(extractWeights(channelsOut));
+        paramMappings.push({ paramPath: mappedPrefix + "/depthwise_filter" }, { paramPath: mappedPrefix + "/pointwise_filter" }, { paramPath: mappedPrefix + "/bias" });
+        return new types_1.SeparableConvParams(depthwise_filter, pointwise_filter, bias);
+    };
+}
+exports.extractSeparableConvParamsFactory = extractSeparableConvParamsFactory;
+function loadSeparableConvParamsFactory(extractWeightEntry) {
+    return function (prefix) {
+        var depthwise_filter = extractWeightEntry(prefix + "/depthwise_filter", 4);
+        var pointwise_filter = extractWeightEntry(prefix + "/pointwise_filter", 4);
+        var bias = extractWeightEntry(prefix + "/bias", 1);
+        return new types_1.SeparableConvParams(depthwise_filter, pointwise_filter, bias);
+    };
+}
+exports.loadSeparableConvParamsFactory = loadSeparableConvParamsFactory;
+
+},{"./types":233,"@tensorflow/tfjs-core":100}],227:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var utils_1 = require("../utils");
+function extractWeightEntryFactory(weightMap, paramMappings) {
+    return function (originalPath, paramRank, mappedPath) {
+        var tensor = weightMap[originalPath];
+        if (!utils_1.isTensor(tensor, paramRank)) {
+            throw new Error("expected weightMap[" + originalPath + "] to be a Tensor" + paramRank + "D, instead have " + tensor);
+        }
+        paramMappings.push({ originalPath: originalPath, paramPath: mappedPath || originalPath });
+        return tensor;
+    };
+}
+exports.extractWeightEntryFactory = extractWeightEntryFactory;
+
+},{"../utils":370}],228:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+function extractWeightsFactory(weights) {
+    var remainingWeights = weights;
+    function extractWeights(numWeights) {
+        var ret = remainingWeights.slice(0, numWeights);
+        remainingWeights = remainingWeights.slice(numWeights);
+        return ret;
+    }
+    function getRemainingWeights() {
+        return remainingWeights;
+    }
+    return {
+        extractWeights: extractWeights,
+        getRemainingWeights: getRemainingWeights
+    };
+}
+exports.extractWeightsFactory = extractWeightsFactory;
+
+},{}],229:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tf = require("@tensorflow/tfjs-core");
@@ -37127,7 +37869,54 @@ function fullyConnectedLayer(x, params) {
 }
 exports.fullyConnectedLayer = fullyConnectedLayer;
 
-},{"@tensorflow/tfjs-core":100}],214:[function(require,module,exports){
+},{"@tensorflow/tfjs-core":100}],230:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+function getModelUris(uri, defaultModelName) {
+    var defaultManifestFilename = defaultModelName + "-weights_manifest.json";
+    if (!uri) {
+        return {
+            modelBaseUri: '',
+            manifestUri: defaultManifestFilename
+        };
+    }
+    if (uri === '/') {
+        return {
+            modelBaseUri: '/',
+            manifestUri: "/" + defaultManifestFilename
+        };
+    }
+    var protocol = uri.startsWith('http://') ? 'http://' : uri.startsWith('https://') ? 'https://' : '';
+    uri = uri.replace(protocol, '');
+    var parts = uri.split('/').filter(function (s) { return s; });
+    var manifestFile = uri.endsWith('.json')
+        ? parts[parts.length - 1]
+        : defaultManifestFilename;
+    var modelBaseUri = protocol + (uri.endsWith('.json') ? parts.slice(0, parts.length - 1) : parts).join('/');
+    modelBaseUri = uri.startsWith('/') ? "/" + modelBaseUri : modelBaseUri;
+    return {
+        modelBaseUri: modelBaseUri,
+        manifestUri: modelBaseUri === '/' ? "/" + manifestFile : modelBaseUri + "/" + manifestFile
+    };
+}
+exports.getModelUris = getModelUris;
+
+},{}],231:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var tslib_1 = require("tslib");
+tslib_1.__exportStar(require("./convLayer"), exports);
+tslib_1.__exportStar(require("./depthwiseSeparableConv"), exports);
+tslib_1.__exportStar(require("./disposeUnusedWeightTensors"), exports);
+tslib_1.__exportStar(require("./extractConvParamsFactory"), exports);
+tslib_1.__exportStar(require("./extractFCParamsFactory"), exports);
+tslib_1.__exportStar(require("./extractSeparableConvParamsFactory"), exports);
+tslib_1.__exportStar(require("./extractWeightEntryFactory"), exports);
+tslib_1.__exportStar(require("./extractWeightsFactory"), exports);
+tslib_1.__exportStar(require("./getModelUris"), exports);
+tslib_1.__exportStar(require("./types"), exports);
+
+},{"./convLayer":221,"./depthwiseSeparableConv":222,"./disposeUnusedWeightTensors":223,"./extractConvParamsFactory":224,"./extractFCParamsFactory":225,"./extractSeparableConvParamsFactory":226,"./extractWeightEntryFactory":227,"./extractWeightsFactory":228,"./getModelUris":230,"./types":233,"tslib":385}],232:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 function loadConvParamsFactory(extractWeightEntry) {
@@ -37139,13 +37928,263 @@ function loadConvParamsFactory(extractWeightEntry) {
 }
 exports.loadConvParamsFactory = loadConvParamsFactory;
 
-},{}],215:[function(require,module,exports){
+},{}],233:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var SeparableConvParams = /** @class */ (function () {
+    function SeparableConvParams(depthwise_filter, pointwise_filter, bias) {
+        this.depthwise_filter = depthwise_filter;
+        this.pointwise_filter = pointwise_filter;
+        this.bias = bias;
+    }
+    return SeparableConvParams;
+}());
+exports.SeparableConvParams = SeparableConvParams;
+
+},{}],234:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var tf = require("@tensorflow/tfjs-core");
+var env_1 = require("../env");
+var padToSquare_1 = require("../ops/padToSquare");
+var utils_1 = require("../utils");
+var createCanvas_1 = require("./createCanvas");
+var imageToSquare_1 = require("./imageToSquare");
+var NetInput = /** @class */ (function () {
+    function NetInput(inputs, treatAsBatchInput) {
+        var _this = this;
+        if (treatAsBatchInput === void 0) { treatAsBatchInput = false; }
+        this._imageTensors = [];
+        this._canvases = [];
+        this._treatAsBatchInput = false;
+        this._inputDimensions = [];
+        if (!Array.isArray(inputs)) {
+            throw new Error("NetInput.constructor - expected inputs to be an Array of TResolvedNetInput or to be instanceof tf.Tensor4D, instead have " + inputs);
+        }
+        this._treatAsBatchInput = treatAsBatchInput;
+        this._batchSize = inputs.length;
+        inputs.forEach(function (input, idx) {
+            if (utils_1.isTensor3D(input)) {
+                _this._imageTensors[idx] = input;
+                _this._inputDimensions[idx] = input.shape;
+                return;
+            }
+            if (utils_1.isTensor4D(input)) {
+                var batchSize = input.shape[0];
+                if (batchSize !== 1) {
+                    throw new Error("NetInput - tf.Tensor4D with batchSize " + batchSize + " passed, but not supported in input array");
+                }
+                _this._imageTensors[idx] = input;
+                _this._inputDimensions[idx] = input.shape.slice(1);
+                return;
+            }
+            var canvas = input instanceof env_1.env.getEnv().Canvas ? input : createCanvas_1.createCanvasFromMedia(input);
+            _this._canvases[idx] = canvas;
+            _this._inputDimensions[idx] = [canvas.height, canvas.width, 3];
+        });
+    }
+    Object.defineProperty(NetInput.prototype, "imageTensors", {
+        get: function () {
+            return this._imageTensors;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(NetInput.prototype, "canvases", {
+        get: function () {
+            return this._canvases;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(NetInput.prototype, "isBatchInput", {
+        get: function () {
+            return this.batchSize > 1 || this._treatAsBatchInput;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(NetInput.prototype, "batchSize", {
+        get: function () {
+            return this._batchSize;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(NetInput.prototype, "inputDimensions", {
+        get: function () {
+            return this._inputDimensions;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(NetInput.prototype, "inputSize", {
+        get: function () {
+            return this._inputSize;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(NetInput.prototype, "reshapedInputDimensions", {
+        get: function () {
+            var _this = this;
+            return utils_1.range(this.batchSize, 0, 1).map(function (_, batchIdx) { return _this.getReshapedInputDimensions(batchIdx); });
+        },
+        enumerable: true,
+        configurable: true
+    });
+    NetInput.prototype.getInput = function (batchIdx) {
+        return this.canvases[batchIdx] || this.imageTensors[batchIdx];
+    };
+    NetInput.prototype.getInputDimensions = function (batchIdx) {
+        return this._inputDimensions[batchIdx];
+    };
+    NetInput.prototype.getInputHeight = function (batchIdx) {
+        return this._inputDimensions[batchIdx][0];
+    };
+    NetInput.prototype.getInputWidth = function (batchIdx) {
+        return this._inputDimensions[batchIdx][1];
+    };
+    NetInput.prototype.getReshapedInputDimensions = function (batchIdx) {
+        if (typeof this.inputSize !== 'number') {
+            throw new Error('getReshapedInputDimensions - inputSize not set, toBatchTensor has not been called yet');
+        }
+        var width = this.getInputWidth(batchIdx);
+        var height = this.getInputHeight(batchIdx);
+        return utils_1.computeReshapedDimensions({ width: width, height: height }, this.inputSize);
+    };
+    /**
+     * Create a batch tensor from all input canvases and tensors
+     * with size [batchSize, inputSize, inputSize, 3].
+     *
+     * @param inputSize Height and width of the tensor.
+     * @param isCenterImage (optional, default: false) If true, add an equal amount of padding on
+     * both sides of the minor dimension oof the image.
+     * @returns The batch tensor.
+     */
+    NetInput.prototype.toBatchTensor = function (inputSize, isCenterInputs) {
+        var _this = this;
+        if (isCenterInputs === void 0) { isCenterInputs = true; }
+        this._inputSize = inputSize;
+        return tf.tidy(function () {
+            var inputTensors = utils_1.range(_this.batchSize, 0, 1).map(function (batchIdx) {
+                var input = _this.getInput(batchIdx);
+                if (input instanceof tf.Tensor) {
+                    var imgTensor = utils_1.isTensor4D(input) ? input : input.expandDims();
+                    imgTensor = padToSquare_1.padToSquare(imgTensor, isCenterInputs);
+                    if (imgTensor.shape[1] !== inputSize || imgTensor.shape[2] !== inputSize) {
+                        imgTensor = tf.image.resizeBilinear(imgTensor, [inputSize, inputSize]);
+                    }
+                    return imgTensor.as3D(inputSize, inputSize, 3);
+                }
+                if (input instanceof env_1.env.getEnv().Canvas) {
+                    return tf.browser.fromPixels(imageToSquare_1.imageToSquare(input, inputSize, isCenterInputs));
+                }
+                throw new Error("toBatchTensor - at batchIdx " + batchIdx + ", expected input to be instanceof tf.Tensor or instanceof HTMLCanvasElement, instead have " + input);
+            });
+            var batchTensor = tf.stack(inputTensors.map(function (t) { return t.toFloat(); })).as4D(_this.batchSize, inputSize, inputSize, 3);
+            return batchTensor;
+        });
+    };
+    return NetInput;
+}());
+exports.NetInput = NetInput;
+
+},{"../env":265,"../ops/padToSquare":341,"../utils":370,"./createCanvas":237,"./imageToSquare":247,"@tensorflow/tfjs-core":100}],235:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var env_1 = require("../env");
+var isMediaLoaded_1 = require("./isMediaLoaded");
+function awaitMediaLoaded(media) {
+    return new Promise(function (resolve, reject) {
+        if (media instanceof env_1.env.getEnv().Canvas || isMediaLoaded_1.isMediaLoaded(media)) {
+            return resolve();
+        }
+        function onLoad(e) {
+            if (!e.currentTarget)
+                return;
+            e.currentTarget.removeEventListener('load', onLoad);
+            e.currentTarget.removeEventListener('error', onError);
+            resolve(e);
+        }
+        function onError(e) {
+            if (!e.currentTarget)
+                return;
+            e.currentTarget.removeEventListener('load', onLoad);
+            e.currentTarget.removeEventListener('error', onError);
+            reject(e);
+        }
+        media.addEventListener('load', onLoad);
+        media.addEventListener('error', onError);
+    });
+}
+exports.awaitMediaLoaded = awaitMediaLoaded;
+
+},{"../env":265,"./isMediaLoaded":250}],236:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var env_1 = require("../env");
+function bufferToImage(buf) {
+    return new Promise(function (resolve, reject) {
+        if (!(buf instanceof Blob)) {
+            return reject('bufferToImage - expected buf to be of type: Blob');
+        }
+        var reader = new FileReader();
+        reader.onload = function () {
+            if (typeof reader.result !== 'string') {
+                return reject('bufferToImage - expected reader.result to be a string, in onload');
+            }
+            var img = env_1.env.getEnv().createImageElement();
+            img.onload = function () { return resolve(img); };
+            img.onerror = reject;
+            img.src = reader.result;
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(buf);
+    });
+}
+exports.bufferToImage = bufferToImage;
+
+},{"../env":265}],237:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var env_1 = require("../env");
+var getContext2dOrThrow_1 = require("./getContext2dOrThrow");
+var getMediaDimensions_1 = require("./getMediaDimensions");
+var isMediaLoaded_1 = require("./isMediaLoaded");
+function createCanvas(_a) {
+    var width = _a.width, height = _a.height;
+    var createCanvasElement = env_1.env.getEnv().createCanvasElement;
+    var canvas = createCanvasElement();
+    canvas.width = width;
+    canvas.height = height;
+    return canvas;
+}
+exports.createCanvas = createCanvas;
+function createCanvasFromMedia(media, dims) {
+    var ImageData = env_1.env.getEnv().ImageData;
+    if (!(media instanceof ImageData) && !isMediaLoaded_1.isMediaLoaded(media)) {
+        throw new Error('createCanvasFromMedia - media has not finished loading yet');
+    }
+    var _a = dims || getMediaDimensions_1.getMediaDimensions(media), width = _a.width, height = _a.height;
+    var canvas = createCanvas({ width: width, height: height });
+    if (media instanceof ImageData) {
+        getContext2dOrThrow_1.getContext2dOrThrow(canvas).putImageData(media, 0, 0);
+    }
+    else {
+        getContext2dOrThrow_1.getContext2dOrThrow(canvas).drawImage(media, 0, 0, width, height);
+    }
+    return canvas;
+}
+exports.createCanvasFromMedia = createCanvasFromMedia;
+
+},{"../env":265,"./getContext2dOrThrow":244,"./getMediaDimensions":245,"./isMediaLoaded":250}],238:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
 var tf = require("@tensorflow/tfjs-core");
-var tfjs_image_recognition_base_1 = require("tfjs-image-recognition-base");
 var FaceDetection_1 = require("../classes/FaceDetection");
+var utils_1 = require("../utils");
 /**
  * Extracts the tensors of the image regions containing the detected faces.
  * Useful if you want to compute the face descriptors for the face images.
@@ -37159,14 +38198,14 @@ var FaceDetection_1 = require("../classes/FaceDetection");
 function extractFaceTensors(imageTensor, detections) {
     return tslib_1.__awaiter(this, void 0, void 0, function () {
         return tslib_1.__generator(this, function (_a) {
-            if (!tfjs_image_recognition_base_1.isTensor3D(imageTensor) && !tfjs_image_recognition_base_1.isTensor4D(imageTensor)) {
+            if (!utils_1.isTensor3D(imageTensor) && !utils_1.isTensor4D(imageTensor)) {
                 throw new Error('extractFaceTensors - expected image tensor to be 3D or 4D');
             }
-            if (tfjs_image_recognition_base_1.isTensor4D(imageTensor) && imageTensor.shape[0] > 1) {
+            if (utils_1.isTensor4D(imageTensor) && imageTensor.shape[0] > 1) {
                 throw new Error('extractFaceTensors - batchSize > 1 not supported');
             }
             return [2 /*return*/, tf.tidy(function () {
-                    var _a = imageTensor.shape.slice(tfjs_image_recognition_base_1.isTensor4D(imageTensor) ? 1 : 0), imgHeight = _a[0], imgWidth = _a[1], numChannels = _a[2];
+                    var _a = imageTensor.shape.slice(utils_1.isTensor4D(imageTensor) ? 1 : 0), imgHeight = _a[0], imgWidth = _a[1], numChannels = _a[2];
                     var boxes = detections.map(function (det) { return det instanceof FaceDetection_1.FaceDetection
                         ? det.forSize(imgWidth, imgHeight).box
                         : det; })
@@ -37182,12 +38221,16 @@ function extractFaceTensors(imageTensor, detections) {
 }
 exports.extractFaceTensors = extractFaceTensors;
 
-},{"../classes/FaceDetection":205,"@tensorflow/tfjs-core":100,"tfjs-image-recognition-base":372,"tslib":392}],216:[function(require,module,exports){
+},{"../classes/FaceDetection":209,"../utils":370,"@tensorflow/tfjs-core":100,"tslib":385}],239:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
-var tfjs_image_recognition_base_1 = require("tfjs-image-recognition-base");
 var FaceDetection_1 = require("../classes/FaceDetection");
+var env_1 = require("../env");
+var createCanvas_1 = require("./createCanvas");
+var getContext2dOrThrow_1 = require("./getContext2dOrThrow");
+var imageTensorToCanvas_1 = require("./imageTensorToCanvas");
+var toNetInput_1 = require("./toNetInput");
 /**
  * Extracts the image regions containing the detected faces.
  *
@@ -37201,10 +38244,10 @@ function extractFaces(input, detections) {
         return tslib_1.__generator(this, function (_b) {
             switch (_b.label) {
                 case 0:
-                    Canvas = tfjs_image_recognition_base_1.env.getEnv().Canvas;
+                    Canvas = env_1.env.getEnv().Canvas;
                     canvas = input;
                     if (!!(input instanceof Canvas)) return [3 /*break*/, 5];
-                    return [4 /*yield*/, tfjs_image_recognition_base_1.toNetInput(input)];
+                    return [4 /*yield*/, toNetInput_1.toNetInput(input)];
                 case 1:
                     netInput = _b.sent();
                     if (netInput.batchSize > 1) {
@@ -37214,7 +38257,7 @@ function extractFaces(input, detections) {
                     if (!(tensorOrCanvas instanceof Canvas)) return [3 /*break*/, 2];
                     _a = tensorOrCanvas;
                     return [3 /*break*/, 4];
-                case 2: return [4 /*yield*/, tfjs_image_recognition_base_1.imageTensorToCanvas(tensorOrCanvas)];
+                case 2: return [4 /*yield*/, imageTensorToCanvas_1.imageTensorToCanvas(tensorOrCanvas)];
                 case 3:
                     _a = _b.sent();
                     _b.label = 4;
@@ -37222,15 +38265,15 @@ function extractFaces(input, detections) {
                     canvas = _a;
                     _b.label = 5;
                 case 5:
-                    ctx = tfjs_image_recognition_base_1.getContext2dOrThrow(canvas);
+                    ctx = getContext2dOrThrow_1.getContext2dOrThrow(canvas);
                     boxes = detections.map(function (det) { return det instanceof FaceDetection_1.FaceDetection
                         ? det.forSize(canvas.width, canvas.height).box.floor()
                         : det; })
                         .map(function (box) { return box.clipAtImageBorders(canvas.width, canvas.height); });
                     return [2 /*return*/, boxes.map(function (_a) {
                             var x = _a.x, y = _a.y, width = _a.width, height = _a.height;
-                            var faceImg = tfjs_image_recognition_base_1.createCanvas({ width: width, height: height });
-                            tfjs_image_recognition_base_1.getContext2dOrThrow(faceImg)
+                            var faceImg = createCanvas_1.createCanvas({ width: width, height: height });
+                            getContext2dOrThrow_1.getContext2dOrThrow(faceImg)
                                 .putImageData(ctx.getImageData(x, y, width, height), 0, 0);
                             return faceImg;
                         })];
@@ -37240,19 +38283,398 @@ function extractFaces(input, detections) {
 }
 exports.extractFaces = extractFaces;
 
-},{"../classes/FaceDetection":205,"tfjs-image-recognition-base":372,"tslib":392}],217:[function(require,module,exports){
+},{"../classes/FaceDetection":209,"../env":265,"./createCanvas":237,"./getContext2dOrThrow":244,"./imageTensorToCanvas":246,"./toNetInput":254,"tslib":385}],240:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
-tslib_1.__exportStar(require("./extractFaces"), exports);
-tslib_1.__exportStar(require("./extractFaceTensors"), exports);
+var bufferToImage_1 = require("./bufferToImage");
+var fetchOrThrow_1 = require("./fetchOrThrow");
+function fetchImage(uri) {
+    return tslib_1.__awaiter(this, void 0, void 0, function () {
+        var res, blob;
+        return tslib_1.__generator(this, function (_a) {
+            switch (_a.label) {
+                case 0: return [4 /*yield*/, fetchOrThrow_1.fetchOrThrow(uri)];
+                case 1:
+                    res = _a.sent();
+                    return [4 /*yield*/, (res).blob()];
+                case 2:
+                    blob = _a.sent();
+                    if (!blob.type.startsWith('image/')) {
+                        throw new Error("fetchImage - expected blob type to be of type image/*, instead have: " + blob.type + ", for url: " + res.url);
+                    }
+                    return [2 /*return*/, bufferToImage_1.bufferToImage(blob)];
+            }
+        });
+    });
+}
+exports.fetchImage = fetchImage;
 
-},{"./extractFaceTensors":215,"./extractFaces":216,"tslib":392}],218:[function(require,module,exports){
+},{"./bufferToImage":236,"./fetchOrThrow":243,"tslib":385}],241:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-var tfjs_image_recognition_base_1 = require("tfjs-image-recognition-base");
+var tslib_1 = require("tslib");
+var fetchOrThrow_1 = require("./fetchOrThrow");
+function fetchJson(uri) {
+    return tslib_1.__awaiter(this, void 0, void 0, function () {
+        return tslib_1.__generator(this, function (_a) {
+            switch (_a.label) {
+                case 0: return [4 /*yield*/, fetchOrThrow_1.fetchOrThrow(uri)];
+                case 1: return [2 /*return*/, (_a.sent()).json()];
+            }
+        });
+    });
+}
+exports.fetchJson = fetchJson;
+
+},{"./fetchOrThrow":243,"tslib":385}],242:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var tslib_1 = require("tslib");
+var fetchOrThrow_1 = require("./fetchOrThrow");
+function fetchNetWeights(uri) {
+    return tslib_1.__awaiter(this, void 0, void 0, function () {
+        var _a;
+        return tslib_1.__generator(this, function (_b) {
+            switch (_b.label) {
+                case 0:
+                    _a = Float32Array.bind;
+                    return [4 /*yield*/, fetchOrThrow_1.fetchOrThrow(uri)];
+                case 1: return [4 /*yield*/, (_b.sent()).arrayBuffer()];
+                case 2: return [2 /*return*/, new (_a.apply(Float32Array, [void 0, _b.sent()]))()];
+            }
+        });
+    });
+}
+exports.fetchNetWeights = fetchNetWeights;
+
+},{"./fetchOrThrow":243,"tslib":385}],243:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var tslib_1 = require("tslib");
+var env_1 = require("../env");
+function fetchOrThrow(url, init) {
+    return tslib_1.__awaiter(this, void 0, void 0, function () {
+        var fetch, res;
+        return tslib_1.__generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    fetch = env_1.env.getEnv().fetch;
+                    return [4 /*yield*/, fetch(url, init)];
+                case 1:
+                    res = _a.sent();
+                    if (!(res.status < 400)) {
+                        throw new Error("failed to fetch: (" + res.status + ") " + res.statusText + ", from url: " + res.url);
+                    }
+                    return [2 /*return*/, res];
+            }
+        });
+    });
+}
+exports.fetchOrThrow = fetchOrThrow;
+
+},{"../env":265,"tslib":385}],244:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var env_1 = require("../env");
+var resolveInput_1 = require("./resolveInput");
+function getContext2dOrThrow(canvasArg) {
+    var _a = env_1.env.getEnv(), Canvas = _a.Canvas, CanvasRenderingContext2D = _a.CanvasRenderingContext2D;
+    if (canvasArg instanceof CanvasRenderingContext2D) {
+        return canvasArg;
+    }
+    var canvas = resolveInput_1.resolveInput(canvasArg);
+    if (!(canvas instanceof Canvas)) {
+        throw new Error('resolveContext2d - expected canvas to be of instance of Canvas');
+    }
+    var ctx = canvas.getContext('2d');
+    if (!ctx) {
+        throw new Error('resolveContext2d - canvas 2d context is null');
+    }
+    return ctx;
+}
+exports.getContext2dOrThrow = getContext2dOrThrow;
+
+},{"../env":265,"./resolveInput":253}],245:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var Dimensions_1 = require("../classes/Dimensions");
+var env_1 = require("../env");
+function getMediaDimensions(input) {
+    var _a = env_1.env.getEnv(), Image = _a.Image, Video = _a.Video;
+    if (input instanceof Image) {
+        return new Dimensions_1.Dimensions(input.naturalWidth, input.naturalHeight);
+    }
+    if (input instanceof Video) {
+        return new Dimensions_1.Dimensions(input.videoWidth, input.videoHeight);
+    }
+    return new Dimensions_1.Dimensions(input.width, input.height);
+}
+exports.getMediaDimensions = getMediaDimensions;
+
+},{"../classes/Dimensions":208,"../env":265}],246:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var tslib_1 = require("tslib");
+var tf = require("@tensorflow/tfjs-core");
+var env_1 = require("../env");
+var utils_1 = require("../utils");
+function imageTensorToCanvas(imgTensor, canvas) {
+    return tslib_1.__awaiter(this, void 0, void 0, function () {
+        var targetCanvas, _a, height, width, numChannels, imgTensor3D;
+        return tslib_1.__generator(this, function (_b) {
+            switch (_b.label) {
+                case 0:
+                    targetCanvas = canvas || env_1.env.getEnv().createCanvasElement();
+                    _a = imgTensor.shape.slice(utils_1.isTensor4D(imgTensor) ? 1 : 0), height = _a[0], width = _a[1], numChannels = _a[2];
+                    imgTensor3D = tf.tidy(function () { return imgTensor.as3D(height, width, numChannels).toInt(); });
+                    return [4 /*yield*/, tf.browser.toPixels(imgTensor3D, targetCanvas)];
+                case 1:
+                    _b.sent();
+                    imgTensor3D.dispose();
+                    return [2 /*return*/, targetCanvas];
+            }
+        });
+    });
+}
+exports.imageTensorToCanvas = imageTensorToCanvas;
+
+},{"../env":265,"../utils":370,"@tensorflow/tfjs-core":100,"tslib":385}],247:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var env_1 = require("../env");
+var createCanvas_1 = require("./createCanvas");
+var getContext2dOrThrow_1 = require("./getContext2dOrThrow");
+var getMediaDimensions_1 = require("./getMediaDimensions");
+function imageToSquare(input, inputSize, centerImage) {
+    if (centerImage === void 0) { centerImage = false; }
+    var _a = env_1.env.getEnv(), Image = _a.Image, Canvas = _a.Canvas;
+    if (!(input instanceof Image || input instanceof Canvas)) {
+        throw new Error('imageToSquare - expected arg0 to be HTMLImageElement | HTMLCanvasElement');
+    }
+    var dims = getMediaDimensions_1.getMediaDimensions(input);
+    var scale = inputSize / Math.max(dims.height, dims.width);
+    var width = scale * dims.width;
+    var height = scale * dims.height;
+    var targetCanvas = createCanvas_1.createCanvas({ width: inputSize, height: inputSize });
+    var inputCanvas = input instanceof Canvas ? input : createCanvas_1.createCanvasFromMedia(input);
+    var offset = Math.abs(width - height) / 2;
+    var dx = centerImage && width < height ? offset : 0;
+    var dy = centerImage && height < width ? offset : 0;
+    getContext2dOrThrow_1.getContext2dOrThrow(targetCanvas).drawImage(inputCanvas, dx, dy, width, height);
+    return targetCanvas;
+}
+exports.imageToSquare = imageToSquare;
+
+},{"../env":265,"./createCanvas":237,"./getContext2dOrThrow":244,"./getMediaDimensions":245}],248:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var tslib_1 = require("tslib");
+tslib_1.__exportStar(require("./awaitMediaLoaded"), exports);
+tslib_1.__exportStar(require("./bufferToImage"), exports);
+tslib_1.__exportStar(require("./createCanvas"), exports);
+tslib_1.__exportStar(require("./extractFaces"), exports);
+tslib_1.__exportStar(require("./extractFaceTensors"), exports);
+tslib_1.__exportStar(require("./fetchImage"), exports);
+tslib_1.__exportStar(require("./fetchJson"), exports);
+tslib_1.__exportStar(require("./fetchNetWeights"), exports);
+tslib_1.__exportStar(require("./fetchOrThrow"), exports);
+tslib_1.__exportStar(require("./getContext2dOrThrow"), exports);
+tslib_1.__exportStar(require("./getMediaDimensions"), exports);
+tslib_1.__exportStar(require("./imageTensorToCanvas"), exports);
+tslib_1.__exportStar(require("./imageToSquare"), exports);
+tslib_1.__exportStar(require("./isMediaElement"), exports);
+tslib_1.__exportStar(require("./isMediaLoaded"), exports);
+tslib_1.__exportStar(require("./loadWeightMap"), exports);
+tslib_1.__exportStar(require("./matchDimensions"), exports);
+tslib_1.__exportStar(require("./NetInput"), exports);
+tslib_1.__exportStar(require("./resolveInput"), exports);
+tslib_1.__exportStar(require("./toNetInput"), exports);
+
+},{"./NetInput":234,"./awaitMediaLoaded":235,"./bufferToImage":236,"./createCanvas":237,"./extractFaceTensors":238,"./extractFaces":239,"./fetchImage":240,"./fetchJson":241,"./fetchNetWeights":242,"./fetchOrThrow":243,"./getContext2dOrThrow":244,"./getMediaDimensions":245,"./imageTensorToCanvas":246,"./imageToSquare":247,"./isMediaElement":249,"./isMediaLoaded":250,"./loadWeightMap":251,"./matchDimensions":252,"./resolveInput":253,"./toNetInput":254,"tslib":385}],249:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var env_1 = require("../env");
+function isMediaElement(input) {
+    var _a = env_1.env.getEnv(), Image = _a.Image, Canvas = _a.Canvas, Video = _a.Video;
+    return input instanceof Image
+        || input instanceof Canvas
+        || input instanceof Video;
+}
+exports.isMediaElement = isMediaElement;
+
+},{"../env":265}],250:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var env_1 = require("../env");
+function isMediaLoaded(media) {
+    var _a = env_1.env.getEnv(), Image = _a.Image, Video = _a.Video;
+    return (media instanceof Image && media.complete)
+        || (media instanceof Video && media.readyState >= 3);
+}
+exports.isMediaLoaded = isMediaLoaded;
+
+},{"../env":265}],251:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var tslib_1 = require("tslib");
+var tf = require("@tensorflow/tfjs-core");
+var getModelUris_1 = require("../common/getModelUris");
+var fetchJson_1 = require("./fetchJson");
+function loadWeightMap(uri, defaultModelName) {
+    return tslib_1.__awaiter(this, void 0, void 0, function () {
+        var _a, manifestUri, modelBaseUri, manifest;
+        return tslib_1.__generator(this, function (_b) {
+            switch (_b.label) {
+                case 0:
+                    _a = getModelUris_1.getModelUris(uri, defaultModelName), manifestUri = _a.manifestUri, modelBaseUri = _a.modelBaseUri;
+                    return [4 /*yield*/, fetchJson_1.fetchJson(manifestUri)];
+                case 1:
+                    manifest = _b.sent();
+                    return [2 /*return*/, tf.io.loadWeights(manifest, modelBaseUri)];
+            }
+        });
+    });
+}
+exports.loadWeightMap = loadWeightMap;
+
+},{"../common/getModelUris":230,"./fetchJson":241,"@tensorflow/tfjs-core":100,"tslib":385}],252:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var getMediaDimensions_1 = require("./getMediaDimensions");
+function matchDimensions(input, reference, useMediaDimensions) {
+    if (useMediaDimensions === void 0) { useMediaDimensions = false; }
+    var _a = useMediaDimensions
+        ? getMediaDimensions_1.getMediaDimensions(reference)
+        : reference, width = _a.width, height = _a.height;
+    input.width = width;
+    input.height = height;
+    return { width: width, height: height };
+}
+exports.matchDimensions = matchDimensions;
+
+},{"./getMediaDimensions":245}],253:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var env_1 = require("../env");
+function resolveInput(arg) {
+    if (!env_1.env.isNodejs() && typeof arg === 'string') {
+        return document.getElementById(arg);
+    }
+    return arg;
+}
+exports.resolveInput = resolveInput;
+
+},{"../env":265}],254:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var tslib_1 = require("tslib");
+var utils_1 = require("../utils");
+var awaitMediaLoaded_1 = require("./awaitMediaLoaded");
+var isMediaElement_1 = require("./isMediaElement");
+var NetInput_1 = require("./NetInput");
+var resolveInput_1 = require("./resolveInput");
+/**
+ * Validates the input to make sure, they are valid net inputs and awaits all media elements
+ * to be finished loading.
+ *
+ * @param input The input, which can be a media element or an array of different media elements.
+ * @returns A NetInput instance, which can be passed into one of the neural networks.
+ */
+function toNetInput(inputs) {
+    return tslib_1.__awaiter(this, void 0, void 0, function () {
+        var inputArgArray, getIdxHint, inputArray;
+        return tslib_1.__generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    if (inputs instanceof NetInput_1.NetInput) {
+                        return [2 /*return*/, inputs];
+                    }
+                    inputArgArray = Array.isArray(inputs)
+                        ? inputs
+                        : [inputs];
+                    if (!inputArgArray.length) {
+                        throw new Error('toNetInput - empty array passed as input');
+                    }
+                    getIdxHint = function (idx) { return Array.isArray(inputs) ? " at input index " + idx + ":" : ''; };
+                    inputArray = inputArgArray.map(resolveInput_1.resolveInput);
+                    inputArray.forEach(function (input, i) {
+                        if (!isMediaElement_1.isMediaElement(input) && !utils_1.isTensor3D(input) && !utils_1.isTensor4D(input)) {
+                            if (typeof inputArgArray[i] === 'string') {
+                                throw new Error("toNetInput -" + getIdxHint(i) + " string passed, but could not resolve HTMLElement for element id " + inputArgArray[i]);
+                            }
+                            throw new Error("toNetInput -" + getIdxHint(i) + " expected media to be of type HTMLImageElement | HTMLVideoElement | HTMLCanvasElement | tf.Tensor3D, or to be an element id");
+                        }
+                        if (utils_1.isTensor4D(input)) {
+                            // if tf.Tensor4D is passed in the input array, the batch size has to be 1
+                            var batchSize = input.shape[0];
+                            if (batchSize !== 1) {
+                                throw new Error("toNetInput -" + getIdxHint(i) + " tf.Tensor4D with batchSize " + batchSize + " passed, but not supported in input array");
+                            }
+                        }
+                    });
+                    // wait for all media elements being loaded
+                    return [4 /*yield*/, Promise.all(inputArray.map(function (input) { return isMediaElement_1.isMediaElement(input) && awaitMediaLoaded_1.awaitMediaLoaded(input); }))];
+                case 1:
+                    // wait for all media elements being loaded
+                    _a.sent();
+                    return [2 /*return*/, new NetInput_1.NetInput(inputArray, Array.isArray(inputs))];
+            }
+        });
+    });
+}
+exports.toNetInput = toNetInput;
+
+},{"../utils":370,"./NetInput":234,"./awaitMediaLoaded":235,"./isMediaElement":249,"./resolveInput":253,"tslib":385}],255:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var classes_1 = require("../classes");
+var getContext2dOrThrow_1 = require("../dom/getContext2dOrThrow");
+var DrawTextField_1 = require("./DrawTextField");
+var DrawBoxOptions = /** @class */ (function () {
+    function DrawBoxOptions(options) {
+        if (options === void 0) { options = {}; }
+        var boxColor = options.boxColor, lineWidth = options.lineWidth, label = options.label, drawLabelOptions = options.drawLabelOptions;
+        this.boxColor = boxColor || 'rgba(0, 0, 255, 1)';
+        this.lineWidth = lineWidth || 2;
+        this.label = label;
+        var defaultDrawLabelOptions = {
+            anchorPosition: DrawTextField_1.AnchorPosition.BOTTOM_LEFT,
+            backgroundColor: this.boxColor
+        };
+        this.drawLabelOptions = new DrawTextField_1.DrawTextFieldOptions(Object.assign({}, defaultDrawLabelOptions, drawLabelOptions));
+    }
+    return DrawBoxOptions;
+}());
+exports.DrawBoxOptions = DrawBoxOptions;
+var DrawBox = /** @class */ (function () {
+    function DrawBox(box, options) {
+        if (options === void 0) { options = {}; }
+        this.box = new classes_1.Box(box);
+        this.options = new DrawBoxOptions(options);
+    }
+    DrawBox.prototype.draw = function (canvasArg) {
+        var ctx = getContext2dOrThrow_1.getContext2dOrThrow(canvasArg);
+        var _a = this.options, boxColor = _a.boxColor, lineWidth = _a.lineWidth;
+        var _b = this.box, x = _b.x, y = _b.y, width = _b.width, height = _b.height;
+        ctx.strokeStyle = boxColor;
+        ctx.lineWidth = lineWidth;
+        ctx.strokeRect(x, y, width, height);
+        var label = this.options.label;
+        if (label) {
+            new DrawTextField_1.DrawTextField([label], { x: x - (lineWidth / 2), y: y }, this.options.drawLabelOptions).draw(canvasArg);
+        }
+    };
+    return DrawBox;
+}());
+exports.DrawBox = DrawBox;
+
+},{"../classes":220,"../dom/getContext2dOrThrow":244,"./DrawTextField":257}],256:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 var FaceLandmarks_1 = require("../classes/FaceLandmarks");
 var FaceLandmarks68_1 = require("../classes/FaceLandmarks68");
+var getContext2dOrThrow_1 = require("../dom/getContext2dOrThrow");
 var WithFaceLandmarks_1 = require("../factories/WithFaceLandmarks");
 var drawContour_1 = require("./drawContour");
 var DrawFaceLandmarksOptions = /** @class */ (function () {
@@ -37276,7 +38698,7 @@ var DrawFaceLandmarks = /** @class */ (function () {
         this.options = new DrawFaceLandmarksOptions(options);
     }
     DrawFaceLandmarks.prototype.draw = function (canvasArg) {
-        var ctx = tfjs_image_recognition_base_1.getContext2dOrThrow(canvasArg);
+        var ctx = getContext2dOrThrow_1.getContext2dOrThrow(canvasArg);
         var _a = this.options, drawLines = _a.drawLines, drawPoints = _a.drawPoints, lineWidth = _a.lineWidth, lineColor = _a.lineColor, pointSize = _a.pointSize, pointColor = _a.pointColor;
         if (drawLines && this.faceLandmarks instanceof FaceLandmarks68_1.FaceLandmarks68) {
             ctx.strokeStyle = lineColor;
@@ -37317,7 +38739,88 @@ function drawFaceLandmarks(canvasArg, faceLandmarks) {
 }
 exports.drawFaceLandmarks = drawFaceLandmarks;
 
-},{"../classes/FaceLandmarks":206,"../classes/FaceLandmarks68":208,"../factories/WithFaceLandmarks":255,"./drawContour":219,"tfjs-image-recognition-base":372}],219:[function(require,module,exports){
+},{"../classes/FaceLandmarks":210,"../classes/FaceLandmarks68":212,"../dom/getContext2dOrThrow":244,"../factories/WithFaceLandmarks":300,"./drawContour":258}],257:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var getContext2dOrThrow_1 = require("../dom/getContext2dOrThrow");
+var resolveInput_1 = require("../dom/resolveInput");
+var AnchorPosition;
+(function (AnchorPosition) {
+    AnchorPosition["TOP_LEFT"] = "TOP_LEFT";
+    AnchorPosition["TOP_RIGHT"] = "TOP_RIGHT";
+    AnchorPosition["BOTTOM_LEFT"] = "BOTTOM_LEFT";
+    AnchorPosition["BOTTOM_RIGHT"] = "BOTTOM_RIGHT";
+})(AnchorPosition = exports.AnchorPosition || (exports.AnchorPosition = {}));
+var DrawTextFieldOptions = /** @class */ (function () {
+    function DrawTextFieldOptions(options) {
+        if (options === void 0) { options = {}; }
+        var anchorPosition = options.anchorPosition, backgroundColor = options.backgroundColor, fontColor = options.fontColor, fontSize = options.fontSize, fontStyle = options.fontStyle, padding = options.padding;
+        this.anchorPosition = anchorPosition || AnchorPosition.TOP_LEFT;
+        this.backgroundColor = backgroundColor || 'rgba(0, 0, 0, 0.5)';
+        this.fontColor = fontColor || 'rgba(255, 255, 255, 1)';
+        this.fontSize = fontSize || 14;
+        this.fontStyle = fontStyle || 'Georgia';
+        this.padding = padding || 4;
+    }
+    return DrawTextFieldOptions;
+}());
+exports.DrawTextFieldOptions = DrawTextFieldOptions;
+var DrawTextField = /** @class */ (function () {
+    function DrawTextField(text, anchor, options) {
+        if (options === void 0) { options = {}; }
+        this.text = typeof text === 'string'
+            ? [text]
+            : (text instanceof DrawTextField ? text.text : text);
+        this.anchor = anchor;
+        this.options = new DrawTextFieldOptions(options);
+    }
+    DrawTextField.prototype.measureWidth = function (ctx) {
+        var padding = this.options.padding;
+        return this.text.map(function (l) { return ctx.measureText(l).width; }).reduce(function (w0, w1) { return w0 < w1 ? w1 : w0; }, 0) + (2 * padding);
+    };
+    DrawTextField.prototype.measureHeight = function () {
+        var _a = this.options, fontSize = _a.fontSize, padding = _a.padding;
+        return this.text.length * fontSize + (2 * padding);
+    };
+    DrawTextField.prototype.getUpperLeft = function (ctx, canvasDims) {
+        var anchorPosition = this.options.anchorPosition;
+        var isShiftLeft = anchorPosition === AnchorPosition.BOTTOM_RIGHT || anchorPosition === AnchorPosition.TOP_RIGHT;
+        var isShiftTop = anchorPosition === AnchorPosition.BOTTOM_LEFT || anchorPosition === AnchorPosition.BOTTOM_RIGHT;
+        var textFieldWidth = this.measureWidth(ctx);
+        var textFieldHeight = this.measureHeight();
+        var x = (isShiftLeft ? this.anchor.x - textFieldWidth : this.anchor.x);
+        var y = isShiftTop ? this.anchor.y - textFieldHeight : this.anchor.y;
+        // adjust anchor if text box exceeds canvas borders
+        if (canvasDims) {
+            var width = canvasDims.width, height = canvasDims.height;
+            var newX = Math.max(Math.min(x, width - textFieldWidth), 0);
+            var newY = Math.max(Math.min(y, height - textFieldHeight), 0);
+            return { x: newX, y: newY };
+        }
+        return { x: x, y: y };
+    };
+    DrawTextField.prototype.draw = function (canvasArg) {
+        var canvas = resolveInput_1.resolveInput(canvasArg);
+        var ctx = getContext2dOrThrow_1.getContext2dOrThrow(canvas);
+        var _a = this.options, backgroundColor = _a.backgroundColor, fontColor = _a.fontColor, fontSize = _a.fontSize, fontStyle = _a.fontStyle, padding = _a.padding;
+        ctx.font = fontSize + "px " + fontStyle;
+        var maxTextWidth = this.measureWidth(ctx);
+        var textHeight = this.measureHeight();
+        ctx.fillStyle = backgroundColor;
+        var upperLeft = this.getUpperLeft(ctx, canvas);
+        ctx.fillRect(upperLeft.x, upperLeft.y, maxTextWidth, textHeight);
+        ctx.fillStyle = fontColor;
+        this.text.forEach(function (textLine, i) {
+            var x = padding + upperLeft.x;
+            var y = padding + upperLeft.y + ((i + 1) * fontSize);
+            ctx.fillText(textLine, x, y);
+        });
+    };
+    return DrawTextField;
+}());
+exports.DrawTextField = DrawTextField;
+
+},{"../dom/getContext2dOrThrow":244,"../dom/resolveInput":253}],258:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 function drawContour(ctx, points, isClosed) {
@@ -37342,12 +38845,14 @@ function drawContour(ctx, points, isClosed) {
 }
 exports.drawContour = drawContour;
 
-},{}],220:[function(require,module,exports){
+},{}],259:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-var tfjs_image_recognition_base_1 = require("tfjs-image-recognition-base");
+var classes_1 = require("../classes");
 var FaceDetection_1 = require("../classes/FaceDetection");
 var WithFaceDetection_1 = require("../factories/WithFaceDetection");
+var utils_1 = require("../utils");
+var DrawBox_1 = require("./DrawBox");
 function drawDetections(canvasArg, detections) {
     var detectionsArray = Array.isArray(detections) ? detections : [detections];
     detectionsArray.forEach(function (det) {
@@ -37356,20 +38861,22 @@ function drawDetections(canvasArg, detections) {
             : (WithFaceDetection_1.isWithFaceDetection(det) ? det.detection.score : undefined);
         var box = det instanceof FaceDetection_1.FaceDetection
             ? det.box
-            : (WithFaceDetection_1.isWithFaceDetection(det) ? det.detection.box : new tfjs_image_recognition_base_1.Box(det));
-        var label = score ? "" + tfjs_image_recognition_base_1.round(score) : undefined;
-        new tfjs_image_recognition_base_1.draw.DrawBox(box, { label: label }).draw(canvasArg);
+            : (WithFaceDetection_1.isWithFaceDetection(det) ? det.detection.box : new classes_1.Box(det));
+        var label = score ? "" + utils_1.round(score) : undefined;
+        new DrawBox_1.DrawBox(box, { label: label }).draw(canvasArg);
     });
 }
 exports.drawDetections = drawDetections;
 
-},{"../classes/FaceDetection":205,"../factories/WithFaceDetection":253,"tfjs-image-recognition-base":372}],221:[function(require,module,exports){
+},{"../classes":220,"../classes/FaceDetection":209,"../factories/WithFaceDetection":298,"../utils":370,"./DrawBox":255}],260:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-var tfjs_image_recognition_base_1 = require("tfjs-image-recognition-base");
+var classes_1 = require("../classes");
 var faceExpressionNet_1 = require("../faceExpressionNet");
 var WithFaceDetection_1 = require("../factories/WithFaceDetection");
 var WithFaceExpressions_1 = require("../factories/WithFaceExpressions");
+var utils_1 = require("../utils");
+var DrawTextField_1 = require("./DrawTextField");
 function drawFaceExpressions(canvasArg, faceExpressions, minConfidence, textFieldAnchor) {
     if (minConfidence === void 0) { minConfidence = 0.1; }
     var faceExpressionsArray = Array.isArray(faceExpressions) ? faceExpressions : [faceExpressions];
@@ -37384,23 +38891,218 @@ function drawFaceExpressions(canvasArg, faceExpressions, minConfidence, textFiel
         var resultsToDisplay = sorted.filter(function (expr) { return expr.probability > minConfidence; });
         var anchor = WithFaceDetection_1.isWithFaceDetection(e)
             ? e.detection.box.bottomLeft
-            : (textFieldAnchor || new tfjs_image_recognition_base_1.Point(0, 0));
-        var drawTextField = new tfjs_image_recognition_base_1.draw.DrawTextField(resultsToDisplay.map(function (expr) { return expr.expression + " (" + tfjs_image_recognition_base_1.round(expr.probability) + ")"; }), anchor);
+            : (textFieldAnchor || new classes_1.Point(0, 0));
+        var drawTextField = new DrawTextField_1.DrawTextField(resultsToDisplay.map(function (expr) { return expr.expression + " (" + utils_1.round(expr.probability) + ")"; }), anchor);
         drawTextField.draw(canvasArg);
     });
 }
 exports.drawFaceExpressions = drawFaceExpressions;
 
-},{"../faceExpressionNet":226,"../factories/WithFaceDetection":253,"../factories/WithFaceExpressions":254,"tfjs-image-recognition-base":372}],222:[function(require,module,exports){
+},{"../classes":220,"../faceExpressionNet":271,"../factories/WithFaceDetection":298,"../factories/WithFaceExpressions":299,"../utils":370,"./DrawTextField":257}],261:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
 tslib_1.__exportStar(require("./drawContour"), exports);
 tslib_1.__exportStar(require("./drawDetections"), exports);
 tslib_1.__exportStar(require("./drawFaceExpressions"), exports);
+tslib_1.__exportStar(require("./DrawBox"), exports);
 tslib_1.__exportStar(require("./DrawFaceLandmarks"), exports);
+tslib_1.__exportStar(require("./DrawTextField"), exports);
 
-},{"./DrawFaceLandmarks":218,"./drawContour":219,"./drawDetections":220,"./drawFaceExpressions":221,"tslib":392}],223:[function(require,module,exports){
+},{"./DrawBox":255,"./DrawFaceLandmarks":256,"./DrawTextField":257,"./drawContour":258,"./drawDetections":259,"./drawFaceExpressions":260,"tslib":385}],262:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+function createBrowserEnv() {
+    var fetch = window['fetch'] || function () {
+        throw new Error('fetch - missing fetch implementation for browser environment');
+    };
+    var readFile = function () {
+        throw new Error('readFile - filesystem not available for browser environment');
+    };
+    return {
+        Canvas: HTMLCanvasElement,
+        CanvasRenderingContext2D: CanvasRenderingContext2D,
+        Image: HTMLImageElement,
+        ImageData: ImageData,
+        Video: HTMLVideoElement,
+        createCanvasElement: function () { return document.createElement('canvas'); },
+        createImageElement: function () { return document.createElement('img'); },
+        fetch: fetch,
+        readFile: readFile
+    };
+}
+exports.createBrowserEnv = createBrowserEnv;
+
+},{}],263:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+function createFileSystem(fs) {
+    var requireFsError = '';
+    if (!fs) {
+        try {
+            fs = require('fs');
+        }
+        catch (err) {
+            requireFsError = err.toString();
+        }
+    }
+    var readFile = fs
+        ? function (filePath) {
+            return new Promise(function (res, rej) {
+                fs.readFile(filePath, function (err, buffer) {
+                    return err ? rej(err) : res(buffer);
+                });
+            });
+        }
+        : function () {
+            throw new Error("readFile - failed to require fs in nodejs environment with error: " + requireFsError);
+        };
+    return {
+        readFile: readFile
+    };
+}
+exports.createFileSystem = createFileSystem;
+
+},{"fs":198}],264:[function(require,module,exports){
+(function (global){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var tslib_1 = require("tslib");
+var createFileSystem_1 = require("./createFileSystem");
+function createNodejsEnv() {
+    var Canvas = global['Canvas'] || global['HTMLCanvasElement'];
+    var Image = global['Image'] || global['HTMLImageElement'];
+    var createCanvasElement = function () {
+        if (Canvas) {
+            return new Canvas();
+        }
+        throw new Error('createCanvasElement - missing Canvas implementation for nodejs environment');
+    };
+    var createImageElement = function () {
+        if (Image) {
+            return new Image();
+        }
+        throw new Error('createImageElement - missing Image implementation for nodejs environment');
+    };
+    var fetch = global['fetch'] || function () {
+        throw new Error('fetch - missing fetch implementation for nodejs environment');
+    };
+    var fileSystem = createFileSystem_1.createFileSystem();
+    return tslib_1.__assign({ Canvas: Canvas || /** @class */ (function () {
+            function Canvas() {
+            }
+            return Canvas;
+        }()), CanvasRenderingContext2D: global['CanvasRenderingContext2D'] || /** @class */ (function () {
+            function class_1() {
+            }
+            return class_1;
+        }()), Image: Image || /** @class */ (function () {
+            function Image() {
+            }
+            return Image;
+        }()), ImageData: global['ImageData'] || /** @class */ (function () {
+            function class_2() {
+            }
+            return class_2;
+        }()), Video: global['HTMLVideoElement'] || /** @class */ (function () {
+            function class_3() {
+            }
+            return class_3;
+        }()), createCanvasElement: createCanvasElement,
+        createImageElement: createImageElement,
+        fetch: fetch }, fileSystem);
+}
+exports.createNodejsEnv = createNodejsEnv;
+
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"./createFileSystem":263,"tslib":385}],265:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var createBrowserEnv_1 = require("./createBrowserEnv");
+var createFileSystem_1 = require("./createFileSystem");
+var createNodejsEnv_1 = require("./createNodejsEnv");
+var isBrowser_1 = require("./isBrowser");
+var isNodejs_1 = require("./isNodejs");
+var environment;
+function getEnv() {
+    if (!environment) {
+        throw new Error('getEnv - environment is not defined, check isNodejs() and isBrowser()');
+    }
+    return environment;
+}
+function setEnv(env) {
+    environment = env;
+}
+function initialize() {
+    // check for isBrowser() first to prevent electron renderer process
+    // to be initialized with wrong environment due to isNodejs() returning true
+    if (isBrowser_1.isBrowser()) {
+        setEnv(createBrowserEnv_1.createBrowserEnv());
+    }
+    if (isNodejs_1.isNodejs()) {
+        setEnv(createNodejsEnv_1.createNodejsEnv());
+    }
+}
+function monkeyPatch(env) {
+    if (!environment) {
+        initialize();
+    }
+    if (!environment) {
+        throw new Error('monkeyPatch - environment is not defined, check isNodejs() and isBrowser()');
+    }
+    var _a = env.Canvas, Canvas = _a === void 0 ? environment.Canvas : _a, _b = env.Image, Image = _b === void 0 ? environment.Image : _b;
+    environment.Canvas = Canvas;
+    environment.Image = Image;
+    environment.createCanvasElement = env.createCanvasElement || (function () { return new Canvas(); });
+    environment.createImageElement = env.createImageElement || (function () { return new Image(); });
+    environment.ImageData = env.ImageData || environment.ImageData;
+    environment.Video = env.Video || environment.Video;
+    environment.fetch = env.fetch || environment.fetch;
+    environment.readFile = env.readFile || environment.readFile;
+}
+exports.env = {
+    getEnv: getEnv,
+    setEnv: setEnv,
+    initialize: initialize,
+    createBrowserEnv: createBrowserEnv_1.createBrowserEnv,
+    createFileSystem: createFileSystem_1.createFileSystem,
+    createNodejsEnv: createNodejsEnv_1.createNodejsEnv,
+    monkeyPatch: monkeyPatch,
+    isBrowser: isBrowser_1.isBrowser,
+    isNodejs: isNodejs_1.isNodejs
+};
+initialize();
+
+},{"./createBrowserEnv":262,"./createFileSystem":263,"./createNodejsEnv":264,"./isBrowser":266,"./isNodejs":267}],266:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+function isBrowser() {
+    return typeof window === 'object'
+        && typeof document !== 'undefined'
+        && typeof HTMLImageElement !== 'undefined'
+        && typeof HTMLCanvasElement !== 'undefined'
+        && typeof HTMLVideoElement !== 'undefined'
+        && typeof ImageData !== 'undefined'
+        && typeof CanvasRenderingContext2D !== 'undefined';
+}
+exports.isBrowser = isBrowser;
+
+},{}],267:[function(require,module,exports){
+(function (process,global){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+function isNodejs() {
+    return typeof global === 'object'
+        && typeof require === 'function'
+        && typeof module !== 'undefined'
+        // issues with gatsby.js: module.exports is undefined
+        // && !!module.exports
+        && typeof process !== 'undefined' && !!process.version;
+}
+exports.isNodejs = isNodejs;
+
+}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"_process":375}],268:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 function euclideanDistance(arr1, arr2) {
@@ -37414,12 +39116,12 @@ function euclideanDistance(arr1, arr2) {
 }
 exports.euclideanDistance = euclideanDistance;
 
-},{}],224:[function(require,module,exports){
+},{}],269:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
 var tf = require("@tensorflow/tfjs-core");
-var tfjs_image_recognition_base_1 = require("tfjs-image-recognition-base");
+var dom_1 = require("../dom");
 var FaceFeatureExtractor_1 = require("../faceFeatureExtractor/FaceFeatureExtractor");
 var FaceProcessor_1 = require("../faceProcessor/FaceProcessor");
 var FaceExpressions_1 = require("./FaceExpressions");
@@ -37440,7 +39142,7 @@ var FaceExpressionNet = /** @class */ (function (_super) {
                 switch (_b.label) {
                     case 0:
                         _a = this.forwardInput;
-                        return [4 /*yield*/, tfjs_image_recognition_base_1.toNetInput(input)];
+                        return [4 /*yield*/, dom_1.toNetInput(input)];
                     case 1: return [2 /*return*/, _a.apply(this, [_b.sent()])];
                 }
             });
@@ -37452,7 +39154,7 @@ var FaceExpressionNet = /** @class */ (function (_super) {
             var _this = this;
             return tslib_1.__generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0: return [4 /*yield*/, tfjs_image_recognition_base_1.toNetInput(input)];
+                    case 0: return [4 /*yield*/, dom_1.toNetInput(input)];
                     case 1:
                         netInput = _a.sent();
                         return [4 /*yield*/, this.forwardInput(netInput)];
@@ -37495,7 +39197,7 @@ var FaceExpressionNet = /** @class */ (function (_super) {
 }(FaceProcessor_1.FaceProcessor));
 exports.FaceExpressionNet = FaceExpressionNet;
 
-},{"../faceFeatureExtractor/FaceFeatureExtractor":227,"../faceProcessor/FaceProcessor":240,"./FaceExpressions":225,"@tensorflow/tfjs-core":100,"tfjs-image-recognition-base":372,"tslib":392}],225:[function(require,module,exports){
+},{"../dom":248,"../faceFeatureExtractor/FaceFeatureExtractor":272,"../faceProcessor/FaceProcessor":285,"./FaceExpressions":270,"@tensorflow/tfjs-core":100,"tslib":385}],270:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.FACE_EXPRESSION_LABELS = ['neutral', 'happy', 'sad', 'angry', 'fearful', 'disgusted', 'surprised'];
@@ -37519,19 +39221,21 @@ var FaceExpressions = /** @class */ (function () {
 }());
 exports.FaceExpressions = FaceExpressions;
 
-},{}],226:[function(require,module,exports){
+},{}],271:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
 tslib_1.__exportStar(require("./FaceExpressionNet"), exports);
 tslib_1.__exportStar(require("./FaceExpressions"), exports);
 
-},{"./FaceExpressionNet":224,"./FaceExpressions":225,"tslib":392}],227:[function(require,module,exports){
+},{"./FaceExpressionNet":269,"./FaceExpressions":270,"tslib":385}],272:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
 var tf = require("@tensorflow/tfjs-core");
-var tfjs_image_recognition_base_1 = require("tfjs-image-recognition-base");
+var dom_1 = require("../dom");
+var NeuralNetwork_1 = require("../NeuralNetwork");
+var ops_1 = require("../ops");
 var denseBlock_1 = require("./denseBlock");
 var extractParams_1 = require("./extractParams");
 var extractParamsFromWeigthMap_1 = require("./extractParamsFromWeigthMap");
@@ -37548,7 +39252,7 @@ var FaceFeatureExtractor = /** @class */ (function (_super) {
         return tf.tidy(function () {
             var batchTensor = input.toBatchTensor(112, true);
             var meanRgb = [122.782, 117.001, 104.298];
-            var normalized = tfjs_image_recognition_base_1.normalize(batchTensor, meanRgb).div(tf.scalar(255));
+            var normalized = ops_1.normalize(batchTensor, meanRgb).div(tf.scalar(255));
             var out = denseBlock_1.denseBlock4(normalized, params.dense0, true);
             out = denseBlock_1.denseBlock4(out, params.dense1);
             out = denseBlock_1.denseBlock4(out, params.dense2);
@@ -37564,7 +39268,7 @@ var FaceFeatureExtractor = /** @class */ (function (_super) {
                 switch (_b.label) {
                     case 0:
                         _a = this.forwardInput;
-                        return [4 /*yield*/, tfjs_image_recognition_base_1.toNetInput(input)];
+                        return [4 /*yield*/, dom_1.toNetInput(input)];
                     case 1: return [2 /*return*/, _a.apply(this, [_b.sent()])];
                 }
             });
@@ -37580,15 +39284,17 @@ var FaceFeatureExtractor = /** @class */ (function (_super) {
         return extractParams_1.extractParams(weights);
     };
     return FaceFeatureExtractor;
-}(tfjs_image_recognition_base_1.NeuralNetwork));
+}(NeuralNetwork_1.NeuralNetwork));
 exports.FaceFeatureExtractor = FaceFeatureExtractor;
 
-},{"./denseBlock":229,"./extractParams":230,"./extractParamsFromWeigthMap":231,"@tensorflow/tfjs-core":100,"tfjs-image-recognition-base":372,"tslib":392}],228:[function(require,module,exports){
+},{"../NeuralNetwork":200,"../dom":248,"../ops":336,"./denseBlock":274,"./extractParams":275,"./extractParamsFromWeigthMap":276,"@tensorflow/tfjs-core":100,"tslib":385}],273:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
 var tf = require("@tensorflow/tfjs-core");
-var tfjs_image_recognition_base_1 = require("tfjs-image-recognition-base");
+var dom_1 = require("../dom");
+var NeuralNetwork_1 = require("../NeuralNetwork");
+var ops_1 = require("../ops");
 var denseBlock_1 = require("./denseBlock");
 var extractParamsFromWeigthMapTiny_1 = require("./extractParamsFromWeigthMapTiny");
 var extractParamsTiny_1 = require("./extractParamsTiny");
@@ -37605,7 +39311,7 @@ var TinyFaceFeatureExtractor = /** @class */ (function (_super) {
         return tf.tidy(function () {
             var batchTensor = input.toBatchTensor(112, true);
             var meanRgb = [122.782, 117.001, 104.298];
-            var normalized = tfjs_image_recognition_base_1.normalize(batchTensor, meanRgb).div(tf.scalar(255));
+            var normalized = ops_1.normalize(batchTensor, meanRgb).div(tf.scalar(255));
             var out = denseBlock_1.denseBlock3(normalized, params.dense0, true);
             out = denseBlock_1.denseBlock3(out, params.dense1);
             out = denseBlock_1.denseBlock3(out, params.dense2);
@@ -37620,7 +39326,7 @@ var TinyFaceFeatureExtractor = /** @class */ (function (_super) {
                 switch (_b.label) {
                     case 0:
                         _a = this.forwardInput;
-                        return [4 /*yield*/, tfjs_image_recognition_base_1.toNetInput(input)];
+                        return [4 /*yield*/, dom_1.toNetInput(input)];
                     case 1: return [2 /*return*/, _a.apply(this, [_b.sent()])];
                 }
             });
@@ -37636,10 +39342,10 @@ var TinyFaceFeatureExtractor = /** @class */ (function (_super) {
         return extractParamsTiny_1.extractParamsTiny(weights);
     };
     return TinyFaceFeatureExtractor;
-}(tfjs_image_recognition_base_1.NeuralNetwork));
+}(NeuralNetwork_1.NeuralNetwork));
 exports.TinyFaceFeatureExtractor = TinyFaceFeatureExtractor;
 
-},{"./denseBlock":229,"./extractParamsFromWeigthMapTiny":232,"./extractParamsTiny":233,"@tensorflow/tfjs-core":100,"tfjs-image-recognition-base":372,"tslib":392}],229:[function(require,module,exports){
+},{"../NeuralNetwork":200,"../dom":248,"../ops":336,"./denseBlock":274,"./extractParamsFromWeigthMapTiny":277,"./extractParamsTiny":278,"@tensorflow/tfjs-core":100,"tslib":385}],274:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tf = require("@tensorflow/tfjs-core");
@@ -37674,14 +39380,14 @@ function denseBlock4(x, denseBlockParams, isFirstLayer, isScaleDown) {
 }
 exports.denseBlock4 = denseBlock4;
 
-},{"../common/depthwiseSeparableConv":212,"@tensorflow/tfjs-core":100}],230:[function(require,module,exports){
+},{"../common/depthwiseSeparableConv":222,"@tensorflow/tfjs-core":100}],275:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+var common_1 = require("../common");
 var extractorsFactory_1 = require("./extractorsFactory");
-var tfjs_image_recognition_base_1 = require("tfjs-image-recognition-base");
 function extractParams(weights) {
     var paramMappings = [];
-    var _a = tfjs_image_recognition_base_1.TfjsImageRecognitionBase.extractWeightsFactory(weights), extractWeights = _a.extractWeights, getRemainingWeights = _a.getRemainingWeights;
+    var _a = common_1.extractWeightsFactory(weights), extractWeights = _a.extractWeights, getRemainingWeights = _a.getRemainingWeights;
     var extractDenseBlock4Params = extractorsFactory_1.extractorsFactory(extractWeights, paramMappings).extractDenseBlock4Params;
     var dense0 = extractDenseBlock4Params(3, 32, 'dense0', true);
     var dense1 = extractDenseBlock4Params(32, 64, 'dense1');
@@ -37697,10 +39403,10 @@ function extractParams(weights) {
 }
 exports.extractParams = extractParams;
 
-},{"./extractorsFactory":234,"tfjs-image-recognition-base":372}],231:[function(require,module,exports){
+},{"../common":231,"./extractorsFactory":279}],276:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-var tfjs_image_recognition_base_1 = require("tfjs-image-recognition-base");
+var common_1 = require("../common");
 var loadParamsFactory_1 = require("./loadParamsFactory");
 function extractParamsFromWeigthMap(weightMap) {
     var paramMappings = [];
@@ -37711,15 +39417,15 @@ function extractParamsFromWeigthMap(weightMap) {
         dense2: extractDenseBlock4Params('dense2'),
         dense3: extractDenseBlock4Params('dense3')
     };
-    tfjs_image_recognition_base_1.TfjsImageRecognitionBase.disposeUnusedWeightTensors(weightMap, paramMappings);
+    common_1.disposeUnusedWeightTensors(weightMap, paramMappings);
     return { params: params, paramMappings: paramMappings };
 }
 exports.extractParamsFromWeigthMap = extractParamsFromWeigthMap;
 
-},{"./loadParamsFactory":235,"tfjs-image-recognition-base":372}],232:[function(require,module,exports){
+},{"../common":231,"./loadParamsFactory":280}],277:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-var tfjs_image_recognition_base_1 = require("tfjs-image-recognition-base");
+var common_1 = require("../common");
 var loadParamsFactory_1 = require("./loadParamsFactory");
 function extractParamsFromWeigthMapTiny(weightMap) {
     var paramMappings = [];
@@ -37729,19 +39435,19 @@ function extractParamsFromWeigthMapTiny(weightMap) {
         dense1: extractDenseBlock3Params('dense1'),
         dense2: extractDenseBlock3Params('dense2')
     };
-    tfjs_image_recognition_base_1.TfjsImageRecognitionBase.disposeUnusedWeightTensors(weightMap, paramMappings);
+    common_1.disposeUnusedWeightTensors(weightMap, paramMappings);
     return { params: params, paramMappings: paramMappings };
 }
 exports.extractParamsFromWeigthMapTiny = extractParamsFromWeigthMapTiny;
 
-},{"./loadParamsFactory":235,"tfjs-image-recognition-base":372}],233:[function(require,module,exports){
+},{"../common":231,"./loadParamsFactory":280}],278:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-var tfjs_image_recognition_base_1 = require("tfjs-image-recognition-base");
+var common_1 = require("../common");
 var extractorsFactory_1 = require("./extractorsFactory");
 function extractParamsTiny(weights) {
     var paramMappings = [];
-    var _a = tfjs_image_recognition_base_1.TfjsImageRecognitionBase.extractWeightsFactory(weights), extractWeights = _a.extractWeights, getRemainingWeights = _a.getRemainingWeights;
+    var _a = common_1.extractWeightsFactory(weights), extractWeights = _a.extractWeights, getRemainingWeights = _a.getRemainingWeights;
     var extractDenseBlock3Params = extractorsFactory_1.extractorsFactory(extractWeights, paramMappings).extractDenseBlock3Params;
     var dense0 = extractDenseBlock3Params(3, 32, 'dense0', true);
     var dense1 = extractDenseBlock3Params(32, 64, 'dense1');
@@ -37756,13 +39462,13 @@ function extractParamsTiny(weights) {
 }
 exports.extractParamsTiny = extractParamsTiny;
 
-},{"./extractorsFactory":234,"tfjs-image-recognition-base":372}],234:[function(require,module,exports){
+},{"../common":231,"./extractorsFactory":279}],279:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-var tfjs_image_recognition_base_1 = require("tfjs-image-recognition-base");
+var common_1 = require("../common");
 function extractorsFactory(extractWeights, paramMappings) {
-    var extractConvParams = tfjs_image_recognition_base_1.TfjsImageRecognitionBase.extractConvParamsFactory(extractWeights, paramMappings);
-    var extractSeparableConvParams = tfjs_image_recognition_base_1.TfjsImageRecognitionBase.extractSeparableConvParamsFactory(extractWeights, paramMappings);
+    var extractConvParams = common_1.extractConvParamsFactory(extractWeights, paramMappings);
+    var extractSeparableConvParams = common_1.extractSeparableConvParamsFactory(extractWeights, paramMappings);
     function extractDenseBlock3Params(channelsIn, channelsOut, mappedPrefix, isFirstLayer) {
         if (isFirstLayer === void 0) { isFirstLayer = false; }
         var conv0 = isFirstLayer
@@ -37785,15 +39491,15 @@ function extractorsFactory(extractWeights, paramMappings) {
 }
 exports.extractorsFactory = extractorsFactory;
 
-},{"tfjs-image-recognition-base":372}],235:[function(require,module,exports){
+},{"../common":231}],280:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-var tfjs_image_recognition_base_1 = require("tfjs-image-recognition-base");
+var common_1 = require("../common");
 var loadConvParamsFactory_1 = require("../common/loadConvParamsFactory");
 function loadParamsFactory(weightMap, paramMappings) {
-    var extractWeightEntry = tfjs_image_recognition_base_1.TfjsImageRecognitionBase.extractWeightEntryFactory(weightMap, paramMappings);
+    var extractWeightEntry = common_1.extractWeightEntryFactory(weightMap, paramMappings);
     var extractConvParams = loadConvParamsFactory_1.loadConvParamsFactory(extractWeightEntry);
-    var extractSeparableConvParams = tfjs_image_recognition_base_1.TfjsImageRecognitionBase.loadSeparableConvParamsFactory(extractWeightEntry);
+    var extractSeparableConvParams = common_1.loadSeparableConvParamsFactory(extractWeightEntry);
     function extractDenseBlock3Params(prefix, isFirstLayer) {
         if (isFirstLayer === void 0) { isFirstLayer = false; }
         var conv0 = isFirstLayer
@@ -37820,7 +39526,7 @@ function loadParamsFactory(weightMap, paramMappings) {
 }
 exports.loadParamsFactory = loadParamsFactory;
 
-},{"../common/loadConvParamsFactory":214,"tfjs-image-recognition-base":372}],236:[function(require,module,exports){
+},{"../common":231,"../common/loadConvParamsFactory":232}],281:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -37842,14 +39548,16 @@ var FaceLandmark68Net = /** @class */ (function (_super) {
 }(FaceLandmark68NetBase_1.FaceLandmark68NetBase));
 exports.FaceLandmark68Net = FaceLandmark68Net;
 
-},{"../faceFeatureExtractor/FaceFeatureExtractor":227,"./FaceLandmark68NetBase":237,"tslib":392}],237:[function(require,module,exports){
+},{"../faceFeatureExtractor/FaceFeatureExtractor":272,"./FaceLandmark68NetBase":282,"tslib":385}],282:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
 var tf = require("@tensorflow/tfjs-core");
-var tfjs_image_recognition_base_1 = require("tfjs-image-recognition-base");
+var classes_1 = require("../classes");
 var FaceLandmarks68_1 = require("../classes/FaceLandmarks68");
+var dom_1 = require("../dom");
 var FaceProcessor_1 = require("../faceProcessor/FaceProcessor");
+var utils_1 = require("../utils");
 var FaceLandmark68NetBase = /** @class */ (function (_super) {
     tslib_1.__extends(FaceLandmark68NetBase, _super);
     function FaceLandmark68NetBase() {
@@ -37906,7 +39614,7 @@ var FaceLandmark68NetBase = /** @class */ (function (_super) {
                 switch (_b.label) {
                     case 0:
                         _a = this.forwardInput;
-                        return [4 /*yield*/, tfjs_image_recognition_base_1.toNetInput(input)];
+                        return [4 /*yield*/, dom_1.toNetInput(input)];
                     case 1: return [2 /*return*/, _a.apply(this, [_b.sent()])];
                 }
             });
@@ -37918,7 +39626,7 @@ var FaceLandmark68NetBase = /** @class */ (function (_super) {
             var _this = this;
             return tslib_1.__generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0: return [4 /*yield*/, tfjs_image_recognition_base_1.toNetInput(input)];
+                    case 0: return [4 /*yield*/, dom_1.toNetInput(input)];
                     case 1:
                         netInput = _a.sent();
                         landmarkTensors = tf.tidy(function () { return tf.unstack(_this.forwardInput(netInput)); });
@@ -37931,9 +39639,9 @@ var FaceLandmark68NetBase = /** @class */ (function (_super) {
                                             return [4 /*yield*/, landmarkTensor.data()];
                                         case 1:
                                             landmarksArray = _b.apply(_a, [_c.sent()]);
-                                            xCoords = landmarksArray.filter(function (_, i) { return tfjs_image_recognition_base_1.isEven(i); });
-                                            yCoords = landmarksArray.filter(function (_, i) { return !tfjs_image_recognition_base_1.isEven(i); });
-                                            return [2 /*return*/, new FaceLandmarks68_1.FaceLandmarks68(Array(68).fill(0).map(function (_, i) { return new tfjs_image_recognition_base_1.Point(xCoords[i], yCoords[i]); }), {
+                                            xCoords = landmarksArray.filter(function (_, i) { return utils_1.isEven(i); });
+                                            yCoords = landmarksArray.filter(function (_, i) { return !utils_1.isEven(i); });
+                                            return [2 /*return*/, new FaceLandmarks68_1.FaceLandmarks68(Array(68).fill(0).map(function (_, i) { return new classes_1.Point(xCoords[i], yCoords[i]); }), {
                                                     height: netInput.getInputHeight(batchIdx),
                                                     width: netInput.getInputWidth(batchIdx),
                                                 })];
@@ -37957,7 +39665,7 @@ var FaceLandmark68NetBase = /** @class */ (function (_super) {
 }(FaceProcessor_1.FaceProcessor));
 exports.FaceLandmark68NetBase = FaceLandmark68NetBase;
 
-},{"../classes/FaceLandmarks68":208,"../faceProcessor/FaceProcessor":240,"@tensorflow/tfjs-core":100,"tfjs-image-recognition-base":372,"tslib":392}],238:[function(require,module,exports){
+},{"../classes":220,"../classes/FaceLandmarks68":212,"../dom":248,"../faceProcessor/FaceProcessor":285,"../utils":370,"@tensorflow/tfjs-core":100,"tslib":385}],283:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -37979,7 +39687,7 @@ var FaceLandmark68TinyNet = /** @class */ (function (_super) {
 }(FaceLandmark68NetBase_1.FaceLandmark68NetBase));
 exports.FaceLandmark68TinyNet = FaceLandmark68TinyNet;
 
-},{"../faceFeatureExtractor/TinyFaceFeatureExtractor":228,"./FaceLandmark68NetBase":237,"tslib":392}],239:[function(require,module,exports){
+},{"../faceFeatureExtractor/TinyFaceFeatureExtractor":273,"./FaceLandmark68NetBase":282,"tslib":385}],284:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -37995,13 +39703,14 @@ var FaceLandmarkNet = /** @class */ (function (_super) {
 }(FaceLandmark68Net_1.FaceLandmark68Net));
 exports.FaceLandmarkNet = FaceLandmarkNet;
 
-},{"./FaceLandmark68Net":236,"./FaceLandmark68TinyNet":238,"tslib":392}],240:[function(require,module,exports){
+},{"./FaceLandmark68Net":281,"./FaceLandmark68TinyNet":283,"tslib":385}],285:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
 var tf = require("@tensorflow/tfjs-core");
-var tfjs_image_recognition_base_1 = require("tfjs-image-recognition-base");
 var fullyConnectedLayer_1 = require("../common/fullyConnectedLayer");
+var dom_1 = require("../dom");
+var NeuralNetwork_1 = require("../NeuralNetwork");
 var extractParams_1 = require("./extractParams");
 var extractParamsFromWeigthMap_1 = require("./extractParamsFromWeigthMap");
 var util_1 = require("./util");
@@ -38026,7 +39735,7 @@ var FaceProcessor = /** @class */ (function (_super) {
             throw new Error(this._name + " - load model before inference");
         }
         return tf.tidy(function () {
-            var bottleneckFeatures = input instanceof tfjs_image_recognition_base_1.NetInput
+            var bottleneckFeatures = input instanceof dom_1.NetInput
                 ? _this.faceFeatureExtractor.forwardInput(input)
                 : input;
             return fullyConnectedLayer_1.fullyConnectedLayer(bottleneckFeatures.as2D(bottleneckFeatures.shape[0], -1), params.fc);
@@ -38060,17 +39769,17 @@ var FaceProcessor = /** @class */ (function (_super) {
         return this.extractClassifierParams(classifierWeights);
     };
     return FaceProcessor;
-}(tfjs_image_recognition_base_1.NeuralNetwork));
+}(NeuralNetwork_1.NeuralNetwork));
 exports.FaceProcessor = FaceProcessor;
 
-},{"../common/fullyConnectedLayer":213,"./extractParams":241,"./extractParamsFromWeigthMap":242,"./util":243,"@tensorflow/tfjs-core":100,"tfjs-image-recognition-base":372,"tslib":392}],241:[function(require,module,exports){
+},{"../NeuralNetwork":200,"../common/fullyConnectedLayer":229,"../dom":248,"./extractParams":286,"./extractParamsFromWeigthMap":287,"./util":288,"@tensorflow/tfjs-core":100,"tslib":385}],286:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-var tfjs_image_recognition_base_1 = require("tfjs-image-recognition-base");
+var common_1 = require("../common");
 function extractParams(weights, channelsIn, channelsOut) {
     var paramMappings = [];
-    var _a = tfjs_image_recognition_base_1.TfjsImageRecognitionBase.extractWeightsFactory(weights), extractWeights = _a.extractWeights, getRemainingWeights = _a.getRemainingWeights;
-    var extractFCParams = tfjs_image_recognition_base_1.TfjsImageRecognitionBase.extractFCParamsFactory(extractWeights, paramMappings);
+    var _a = common_1.extractWeightsFactory(weights), extractWeights = _a.extractWeights, getRemainingWeights = _a.getRemainingWeights;
+    var extractFCParams = common_1.extractFCParamsFactory(extractWeights, paramMappings);
     var fc = extractFCParams(channelsIn, channelsOut, 'fc');
     if (getRemainingWeights().length !== 0) {
         throw new Error("weights remaing after extract: " + getRemainingWeights().length);
@@ -38082,13 +39791,13 @@ function extractParams(weights, channelsIn, channelsOut) {
 }
 exports.extractParams = extractParams;
 
-},{"tfjs-image-recognition-base":372}],242:[function(require,module,exports){
+},{"../common":231}],287:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-var tfjs_image_recognition_base_1 = require("tfjs-image-recognition-base");
+var common_1 = require("../common");
 function extractParamsFromWeigthMap(weightMap) {
     var paramMappings = [];
-    var extractWeightEntry = tfjs_image_recognition_base_1.TfjsImageRecognitionBase.extractWeightEntryFactory(weightMap, paramMappings);
+    var extractWeightEntry = common_1.extractWeightEntryFactory(weightMap, paramMappings);
     function extractFcParams(prefix) {
         var weights = extractWeightEntry(prefix + "/weights", 2);
         var bias = extractWeightEntry(prefix + "/bias", 1);
@@ -38097,12 +39806,12 @@ function extractParamsFromWeigthMap(weightMap) {
     var params = {
         fc: extractFcParams('fc')
     };
-    tfjs_image_recognition_base_1.TfjsImageRecognitionBase.disposeUnusedWeightTensors(weightMap, paramMappings);
+    common_1.disposeUnusedWeightTensors(weightMap, paramMappings);
     return { params: params, paramMappings: paramMappings };
 }
 exports.extractParamsFromWeigthMap = extractParamsFromWeigthMap;
 
-},{"tfjs-image-recognition-base":372}],243:[function(require,module,exports){
+},{"../common":231}],288:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 function seperateWeightMaps(weightMap) {
@@ -38116,12 +39825,14 @@ function seperateWeightMaps(weightMap) {
 }
 exports.seperateWeightMaps = seperateWeightMaps;
 
-},{}],244:[function(require,module,exports){
+},{}],289:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
 var tf = require("@tensorflow/tfjs-core");
-var tfjs_image_recognition_base_1 = require("tfjs-image-recognition-base");
+var dom_1 = require("../dom");
+var NeuralNetwork_1 = require("../NeuralNetwork");
+var ops_1 = require("../ops");
 var convLayer_1 = require("./convLayer");
 var extractParams_1 = require("./extractParams");
 var extractParamsFromWeigthMap_1 = require("./extractParamsFromWeigthMap");
@@ -38139,7 +39850,7 @@ var FaceRecognitionNet = /** @class */ (function (_super) {
         return tf.tidy(function () {
             var batchTensor = input.toBatchTensor(150, true).toFloat();
             var meanRgb = [122.782, 117.001, 104.298];
-            var normalized = tfjs_image_recognition_base_1.normalize(batchTensor, meanRgb).div(tf.scalar(256));
+            var normalized = ops_1.normalize(batchTensor, meanRgb).div(tf.scalar(256));
             var out = convLayer_1.convDown(normalized, params.conv32_down);
             out = tf.maxPool(out, 3, 2, 'valid');
             out = residualLayer_1.residual(out, params.conv32_1);
@@ -38168,7 +39879,7 @@ var FaceRecognitionNet = /** @class */ (function (_super) {
                 switch (_b.label) {
                     case 0:
                         _a = this.forwardInput;
-                        return [4 /*yield*/, tfjs_image_recognition_base_1.toNetInput(input)];
+                        return [4 /*yield*/, dom_1.toNetInput(input)];
                     case 1: return [2 /*return*/, _a.apply(this, [_b.sent()])];
                 }
             });
@@ -38180,7 +39891,7 @@ var FaceRecognitionNet = /** @class */ (function (_super) {
             var _this = this;
             return tslib_1.__generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0: return [4 /*yield*/, tfjs_image_recognition_base_1.toNetInput(input)];
+                    case 0: return [4 /*yield*/, dom_1.toNetInput(input)];
                     case 1:
                         netInput = _a.sent();
                         faceDescriptorTensors = tf.tidy(function () { return tf.unstack(_this.forwardInput(netInput)); });
@@ -38205,10 +39916,10 @@ var FaceRecognitionNet = /** @class */ (function (_super) {
         return extractParams_1.extractParams(weights);
     };
     return FaceRecognitionNet;
-}(tfjs_image_recognition_base_1.NeuralNetwork));
+}(NeuralNetwork_1.NeuralNetwork));
 exports.FaceRecognitionNet = FaceRecognitionNet;
 
-},{"./convLayer":245,"./extractParams":246,"./extractParamsFromWeigthMap":247,"./residualLayer":249,"@tensorflow/tfjs-core":100,"tfjs-image-recognition-base":372,"tslib":392}],245:[function(require,module,exports){
+},{"../NeuralNetwork":200,"../dom":248,"../ops":336,"./convLayer":290,"./extractParams":291,"./extractParamsFromWeigthMap":292,"./residualLayer":294,"@tensorflow/tfjs-core":100,"tslib":385}],290:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tf = require("@tensorflow/tfjs-core");
@@ -38234,16 +39945,17 @@ function convDown(x, params) {
 }
 exports.convDown = convDown;
 
-},{"./scaleLayer":250,"@tensorflow/tfjs-core":100}],246:[function(require,module,exports){
+},{"./scaleLayer":295,"@tensorflow/tfjs-core":100}],291:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tf = require("@tensorflow/tfjs-core");
-var tfjs_image_recognition_base_1 = require("tfjs-image-recognition-base");
+var common_1 = require("../common");
+var utils_1 = require("../utils");
 function extractorsFactory(extractWeights, paramMappings) {
     function extractFilterValues(numFilterValues, numFilters, filterSize) {
         var weights = extractWeights(numFilterValues);
         var depth = weights.length / (numFilters * filterSize * filterSize);
-        if (tfjs_image_recognition_base_1.isFloat(depth)) {
+        if (utils_1.isFloat(depth)) {
             throw new Error("depth has to be an integer: " + depth + ", weights.length: " + weights.length + ", numFilters: " + numFilters + ", filterSize: " + filterSize);
         }
         return tf.tidy(function () { return tf.transpose(tf.tensor4d(weights, [numFilters, depth, filterSize, filterSize]), [2, 3, 1, 0]); });
@@ -38280,7 +39992,7 @@ function extractorsFactory(extractWeights, paramMappings) {
     };
 }
 function extractParams(weights) {
-    var _a = tfjs_image_recognition_base_1.TfjsImageRecognitionBase.extractWeightsFactory(weights), extractWeights = _a.extractWeights, getRemainingWeights = _a.getRemainingWeights;
+    var _a = common_1.extractWeightsFactory(weights), extractWeights = _a.extractWeights, getRemainingWeights = _a.getRemainingWeights;
     var paramMappings = [];
     var _b = extractorsFactory(extractWeights, paramMappings), extractConvLayerParams = _b.extractConvLayerParams, extractResidualLayerParams = _b.extractResidualLayerParams;
     var conv32_down = extractConvLayerParams(4704, 32, 7, 'conv32_down');
@@ -38325,12 +40037,13 @@ function extractParams(weights) {
 }
 exports.extractParams = extractParams;
 
-},{"@tensorflow/tfjs-core":100,"tfjs-image-recognition-base":372}],247:[function(require,module,exports){
+},{"../common":231,"../utils":370,"@tensorflow/tfjs-core":100}],292:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-var tfjs_image_recognition_base_1 = require("tfjs-image-recognition-base");
+var common_1 = require("../common");
+var utils_1 = require("../utils");
 function extractorsFactory(weightMap, paramMappings) {
-    var extractWeightEntry = tfjs_image_recognition_base_1.TfjsImageRecognitionBase.extractWeightEntryFactory(weightMap, paramMappings);
+    var extractWeightEntry = common_1.extractWeightEntryFactory(weightMap, paramMappings);
     function extractScaleLayerParams(prefix) {
         var weights = extractWeightEntry(prefix + "/scale/weights", 1);
         var biases = extractWeightEntry(prefix + "/scale/biases", 1);
@@ -38373,7 +40086,7 @@ function extractParamsFromWeigthMap(weightMap) {
     var conv256_down_out = extractResidualLayerParams('conv256_down_out');
     var fc = weightMap['fc'];
     paramMappings.push({ originalPath: 'fc', paramPath: 'fc' });
-    if (!tfjs_image_recognition_base_1.isTensor2D(fc)) {
+    if (!utils_1.isTensor2D(fc)) {
         throw new Error("expected weightMap[fc] to be a Tensor2D, instead have " + fc);
     }
     var params = {
@@ -38394,12 +40107,12 @@ function extractParamsFromWeigthMap(weightMap) {
         conv256_down_out: conv256_down_out,
         fc: fc
     };
-    tfjs_image_recognition_base_1.TfjsImageRecognitionBase.disposeUnusedWeightTensors(weightMap, paramMappings);
+    common_1.disposeUnusedWeightTensors(weightMap, paramMappings);
     return { params: params, paramMappings: paramMappings };
 }
 exports.extractParamsFromWeigthMap = extractParamsFromWeigthMap;
 
-},{"tfjs-image-recognition-base":372}],248:[function(require,module,exports){
+},{"../common":231,"../utils":370}],293:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -38412,7 +40125,7 @@ function createFaceRecognitionNet(weights) {
 }
 exports.createFaceRecognitionNet = createFaceRecognitionNet;
 
-},{"./FaceRecognitionNet":244,"tslib":392}],249:[function(require,module,exports){
+},{"./FaceRecognitionNet":289,"tslib":385}],294:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -38450,7 +40163,7 @@ function residualDown(x, params) {
 }
 exports.residualDown = residualDown;
 
-},{"./convLayer":245,"@tensorflow/tfjs-core":100,"tslib":392}],250:[function(require,module,exports){
+},{"./convLayer":290,"@tensorflow/tfjs-core":100,"tslib":385}],295:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tf = require("@tensorflow/tfjs-core");
@@ -38459,7 +40172,7 @@ function scale(x, params) {
 }
 exports.scale = scale;
 
-},{"@tensorflow/tfjs-core":100}],251:[function(require,module,exports){
+},{"@tensorflow/tfjs-core":100}],296:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 function isWithAge(obj) {
@@ -38472,7 +40185,7 @@ function extendWithAge(sourceObj, age) {
 }
 exports.extendWithAge = extendWithAge;
 
-},{}],252:[function(require,module,exports){
+},{}],297:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 function extendWithFaceDescriptor(sourceObj, descriptor) {
@@ -38481,7 +40194,7 @@ function extendWithFaceDescriptor(sourceObj, descriptor) {
 }
 exports.extendWithFaceDescriptor = extendWithFaceDescriptor;
 
-},{}],253:[function(require,module,exports){
+},{}],298:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var FaceDetection_1 = require("../classes/FaceDetection");
@@ -38495,7 +40208,7 @@ function extendWithFaceDetection(sourceObj, detection) {
 }
 exports.extendWithFaceDetection = extendWithFaceDetection;
 
-},{"../classes/FaceDetection":205}],254:[function(require,module,exports){
+},{"../classes/FaceDetection":209}],299:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var FaceExpressions_1 = require("../faceExpressionNet/FaceExpressions");
@@ -38509,7 +40222,7 @@ function extendWithFaceExpressions(sourceObj, expressions) {
 }
 exports.extendWithFaceExpressions = extendWithFaceExpressions;
 
-},{"../faceExpressionNet/FaceExpressions":225}],255:[function(require,module,exports){
+},{"../faceExpressionNet/FaceExpressions":270}],300:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var FaceDetection_1 = require("../classes/FaceDetection");
@@ -38537,14 +40250,14 @@ function extendWithFaceLandmarks(sourceObj, unshiftedLandmarks) {
 }
 exports.extendWithFaceLandmarks = extendWithFaceLandmarks;
 
-},{"../classes/FaceDetection":205,"../classes/FaceLandmarks":206,"./WithFaceDetection":253}],256:[function(require,module,exports){
+},{"../classes/FaceDetection":209,"../classes/FaceLandmarks":210,"./WithFaceDetection":298}],301:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-var tfjs_image_recognition_base_1 = require("tfjs-image-recognition-base");
 var types_1 = require("../ageGenderNet/types");
+var utils_1 = require("../utils");
 function isWithGender(obj) {
     return (obj['gender'] === types_1.Gender.MALE || obj['gender'] === types_1.Gender.FEMALE)
-        && tfjs_image_recognition_base_1.isValidProbablitiy(obj['genderProbability']);
+        && utils_1.isValidProbablitiy(obj['genderProbability']);
 }
 exports.isWithGender = isWithGender;
 function extendWithGender(sourceObj, gender, genderProbability) {
@@ -38553,7 +40266,7 @@ function extendWithGender(sourceObj, gender, genderProbability) {
 }
 exports.extendWithGender = extendWithGender;
 
-},{"../ageGenderNet/types":204,"tfjs-image-recognition-base":372}],257:[function(require,module,exports){
+},{"../ageGenderNet/types":205,"../utils":370}],302:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -38564,7 +40277,7 @@ tslib_1.__exportStar(require("./WithFaceLandmarks"), exports);
 tslib_1.__exportStar(require("./WithAge"), exports);
 tslib_1.__exportStar(require("./WithGender"), exports);
 
-},{"./WithAge":251,"./WithFaceDescriptor":252,"./WithFaceDetection":253,"./WithFaceExpressions":254,"./WithFaceLandmarks":255,"./WithGender":256,"tslib":392}],258:[function(require,module,exports){
+},{"./WithAge":296,"./WithFaceDescriptor":297,"./WithFaceDetection":298,"./WithFaceExpressions":299,"./WithFaceLandmarks":300,"./WithGender":301,"tslib":385}],303:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -38595,7 +40308,7 @@ var ComposableTask = /** @class */ (function () {
 }());
 exports.ComposableTask = ComposableTask;
 
-},{"tslib":392}],259:[function(require,module,exports){
+},{"tslib":385}],304:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -38682,7 +40395,7 @@ var ComputeSingleFaceDescriptorTask = /** @class */ (function (_super) {
 }(ComputeFaceDescriptorsTaskBase));
 exports.ComputeSingleFaceDescriptorTask = ComputeSingleFaceDescriptorTask;
 
-},{"../factories/WithFaceDescriptor":252,"./ComposableTask":258,"./PredictAgeAndGenderTask":263,"./PredictFaceExpressionsTask":264,"./extractFacesAndComputeResults":267,"./nets":269,"tslib":392}],260:[function(require,module,exports){
+},{"../factories/WithFaceDescriptor":297,"./ComposableTask":303,"./PredictAgeAndGenderTask":308,"./PredictFaceExpressionsTask":309,"./extractFacesAndComputeResults":312,"./nets":314,"tslib":385}],305:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -38814,15 +40527,15 @@ var DetectSingleFaceLandmarksTask = /** @class */ (function (_super) {
 }(DetectFaceLandmarksTaskBase));
 exports.DetectSingleFaceLandmarksTask = DetectSingleFaceLandmarksTask;
 
-},{"../dom":217,"../factories/WithFaceLandmarks":255,"./ComposableTask":258,"./ComputeFaceDescriptorsTasks":259,"./PredictAgeAndGenderTask":263,"./PredictFaceExpressionsTask":264,"./nets":269,"@tensorflow/tfjs-core":100,"tslib":392}],261:[function(require,module,exports){
+},{"../dom":248,"../factories/WithFaceLandmarks":300,"./ComposableTask":303,"./ComputeFaceDescriptorsTasks":304,"./PredictAgeAndGenderTask":308,"./PredictFaceExpressionsTask":309,"./nets":314,"@tensorflow/tfjs-core":100,"tslib":385}],306:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
-var tfjs_image_recognition_base_1 = require("tfjs-image-recognition-base");
 var WithFaceDetection_1 = require("../factories/WithFaceDetection");
 var MtcnnOptions_1 = require("../mtcnn/MtcnnOptions");
 var SsdMobilenetv1Options_1 = require("../ssdMobilenetv1/SsdMobilenetv1Options");
 var TinyFaceDetectorOptions_1 = require("../tinyFaceDetector/TinyFaceDetectorOptions");
+var tinyYolov2_1 = require("../tinyYolov2");
 var ComposableTask_1 = require("./ComposableTask");
 var DetectFaceLandmarksTasks_1 = require("./DetectFaceLandmarksTasks");
 var nets_1 = require("./nets");
@@ -38861,7 +40574,7 @@ var DetectAllFacesTask = /** @class */ (function (_super) {
                             ? function (input) { return nets_1.nets.tinyFaceDetector.locateFaces(input, options); }
                             : (options instanceof SsdMobilenetv1Options_1.SsdMobilenetv1Options
                                 ? function (input) { return nets_1.nets.ssdMobilenetv1.locateFaces(input, options); }
-                                : (options instanceof tfjs_image_recognition_base_1.TfjsImageRecognitionBase.TinyYolov2Options
+                                : (options instanceof tinyYolov2_1.TinyYolov2Options
                                     ? function (input) { return nets_1.nets.tinyYolov2.locateFaces(input, options); }
                                     : null));
                         if (!faceDetectionFunction) {
@@ -38951,7 +40664,7 @@ var DetectSingleFaceTask = /** @class */ (function (_super) {
 }(DetectFacesTaskBase));
 exports.DetectSingleFaceTask = DetectSingleFaceTask;
 
-},{"../factories/WithFaceDetection":253,"../mtcnn/MtcnnOptions":274,"../ssdMobilenetv1/SsdMobilenetv1Options":294,"../tinyFaceDetector/TinyFaceDetectorOptions":305,"./ComposableTask":258,"./DetectFaceLandmarksTasks":260,"./PredictAgeAndGenderTask":263,"./PredictFaceExpressionsTask":264,"./nets":269,"tfjs-image-recognition-base":372,"tslib":392}],262:[function(require,module,exports){
+},{"../factories/WithFaceDetection":298,"../mtcnn/MtcnnOptions":318,"../ssdMobilenetv1/SsdMobilenetv1Options":345,"../tinyFaceDetector/TinyFaceDetectorOptions":356,"../tinyYolov2":368,"./ComposableTask":303,"./DetectFaceLandmarksTasks":305,"./PredictAgeAndGenderTask":308,"./PredictFaceExpressionsTask":309,"./nets":314,"tslib":385}],307:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var FaceMatch_1 = require("../classes/FaceMatch");
@@ -39026,7 +40739,7 @@ var FaceMatcher = /** @class */ (function () {
 }());
 exports.FaceMatcher = FaceMatcher;
 
-},{"../classes/FaceMatch":209,"../classes/LabeledFaceDescriptors":210,"../euclideanDistance":223}],263:[function(require,module,exports){
+},{"../classes/FaceMatch":213,"../classes/LabeledFaceDescriptors":215,"../euclideanDistance":268}],308:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -39146,7 +40859,7 @@ var PredictSingleAgeAndGenderWithFaceAlignmentTask = /** @class */ (function (_s
 }(PredictSingleAgeAndGenderTask));
 exports.PredictSingleAgeAndGenderWithFaceAlignmentTask = PredictSingleAgeAndGenderWithFaceAlignmentTask;
 
-},{"../factories/WithAge":251,"../factories/WithGender":256,"./ComposableTask":258,"./ComputeFaceDescriptorsTasks":259,"./PredictFaceExpressionsTask":264,"./extractFacesAndComputeResults":267,"./nets":269,"tslib":392}],264:[function(require,module,exports){
+},{"../factories/WithAge":296,"../factories/WithGender":301,"./ComposableTask":303,"./ComputeFaceDescriptorsTasks":304,"./PredictFaceExpressionsTask":309,"./extractFacesAndComputeResults":312,"./nets":314,"tslib":385}],309:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -39262,22 +40975,24 @@ var PredictSingleFaceExpressionsWithFaceAlignmentTask = /** @class */ (function 
 }(PredictSingleFaceExpressionsTask));
 exports.PredictSingleFaceExpressionsWithFaceAlignmentTask = PredictSingleFaceExpressionsWithFaceAlignmentTask;
 
-},{"../factories/WithFaceExpressions":254,"./ComposableTask":258,"./ComputeFaceDescriptorsTasks":259,"./PredictAgeAndGenderTask":263,"./extractFacesAndComputeResults":267,"./nets":269,"tslib":392}],265:[function(require,module,exports){
+},{"../factories/WithFaceExpressions":299,"./ComposableTask":303,"./ComputeFaceDescriptorsTasks":304,"./PredictAgeAndGenderTask":308,"./extractFacesAndComputeResults":312,"./nets":314,"tslib":385}],310:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
-var tfjs_image_recognition_base_1 = require("tfjs-image-recognition-base");
 var MtcnnOptions_1 = require("../mtcnn/MtcnnOptions");
 var ssdMobilenetv1_1 = require("../ssdMobilenetv1");
+var tinyYolov2_1 = require("../tinyYolov2");
 var detectFaces_1 = require("./detectFaces");
 // export allFaces API for backward compatibility
 function allFacesSsdMobilenetv1(input, minConfidence) {
     return tslib_1.__awaiter(this, void 0, void 0, function () {
         return tslib_1.__generator(this, function (_a) {
             switch (_a.label) {
-                case 0: return [4 /*yield*/, detectFaces_1.detectAllFaces(input, new ssdMobilenetv1_1.SsdMobilenetv1Options(minConfidence ? { minConfidence: minConfidence } : {}))
-                        .withFaceLandmarks()
-                        .withFaceDescriptors()];
+                case 0:
+                    console.warn('allFacesSsdMobilenetv1 is deprecated and will be removed soon, use the high level api instead');
+                    return [4 /*yield*/, detectFaces_1.detectAllFaces(input, new ssdMobilenetv1_1.SsdMobilenetv1Options(minConfidence ? { minConfidence: minConfidence } : {}))
+                            .withFaceLandmarks()
+                            .withFaceDescriptors()];
                 case 1: return [2 /*return*/, _a.sent()];
             }
         });
@@ -39289,9 +41004,11 @@ function allFacesTinyYolov2(input, forwardParams) {
     return tslib_1.__awaiter(this, void 0, void 0, function () {
         return tslib_1.__generator(this, function (_a) {
             switch (_a.label) {
-                case 0: return [4 /*yield*/, detectFaces_1.detectAllFaces(input, new tfjs_image_recognition_base_1.TfjsImageRecognitionBase.TinyYolov2Options(forwardParams))
-                        .withFaceLandmarks()
-                        .withFaceDescriptors()];
+                case 0:
+                    console.warn('allFacesTinyYolov2 is deprecated and will be removed soon, use the high level api instead');
+                    return [4 /*yield*/, detectFaces_1.detectAllFaces(input, new tinyYolov2_1.TinyYolov2Options(forwardParams))
+                            .withFaceLandmarks()
+                            .withFaceDescriptors()];
                 case 1: return [2 /*return*/, _a.sent()];
             }
         });
@@ -39303,9 +41020,11 @@ function allFacesMtcnn(input, forwardParams) {
     return tslib_1.__awaiter(this, void 0, void 0, function () {
         return tslib_1.__generator(this, function (_a) {
             switch (_a.label) {
-                case 0: return [4 /*yield*/, detectFaces_1.detectAllFaces(input, new MtcnnOptions_1.MtcnnOptions(forwardParams))
-                        .withFaceLandmarks()
-                        .withFaceDescriptors()];
+                case 0:
+                    console.warn('allFacesMtcnn is deprecated and will be removed soon, use the high level api instead');
+                    return [4 /*yield*/, detectFaces_1.detectAllFaces(input, new MtcnnOptions_1.MtcnnOptions(forwardParams))
+                            .withFaceLandmarks()
+                            .withFaceDescriptors()];
                 case 1: return [2 /*return*/, _a.sent()];
             }
         });
@@ -39314,7 +41033,7 @@ function allFacesMtcnn(input, forwardParams) {
 exports.allFacesMtcnn = allFacesMtcnn;
 exports.allFaces = allFacesSsdMobilenetv1;
 
-},{"../mtcnn/MtcnnOptions":274,"../ssdMobilenetv1":298,"./detectFaces":266,"tfjs-image-recognition-base":372,"tslib":392}],266:[function(require,module,exports){
+},{"../mtcnn/MtcnnOptions":318,"../ssdMobilenetv1":349,"../tinyYolov2":368,"./detectFaces":311,"tslib":385}],311:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var SsdMobilenetv1Options_1 = require("../ssdMobilenetv1/SsdMobilenetv1Options");
@@ -39330,7 +41049,7 @@ function detectAllFaces(input, options) {
 }
 exports.detectAllFaces = detectAllFaces;
 
-},{"../ssdMobilenetv1/SsdMobilenetv1Options":294,"./DetectFacesTasks":261}],267:[function(require,module,exports){
+},{"../ssdMobilenetv1/SsdMobilenetv1Options":345,"./DetectFacesTasks":306}],312:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -39390,7 +41109,7 @@ function extractSingleFaceAndComputeResult(parentResult, input, computeResult, e
 }
 exports.extractSingleFaceAndComputeResult = extractSingleFaceAndComputeResult;
 
-},{"../dom":217,"../factories/WithFaceLandmarks":255,"@tensorflow/tfjs-core":100,"tslib":392}],268:[function(require,module,exports){
+},{"../dom":248,"../factories/WithFaceLandmarks":300,"@tensorflow/tfjs-core":100,"tslib":385}],313:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -39403,7 +41122,7 @@ tslib_1.__exportStar(require("./DetectFaceLandmarksTasks"), exports);
 tslib_1.__exportStar(require("./FaceMatcher"), exports);
 tslib_1.__exportStar(require("./nets"), exports);
 
-},{"./ComposableTask":258,"./ComputeFaceDescriptorsTasks":259,"./DetectFaceLandmarksTasks":260,"./DetectFacesTasks":261,"./FaceMatcher":262,"./allFaces":265,"./detectFaces":266,"./nets":269,"tslib":392}],269:[function(require,module,exports){
+},{"./ComposableTask":303,"./ComputeFaceDescriptorsTasks":304,"./DetectFaceLandmarksTasks":305,"./DetectFacesTasks":306,"./FaceMatcher":307,"./allFaces":310,"./detectFaces":311,"./nets":314,"tslib":385}],314:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var AgeGenderNet_1 = require("../ageGenderNet/AgeGenderNet");
@@ -39536,56 +41255,45 @@ exports.loadFaceDetectionModel = exports.loadSsdMobilenetv1Model;
 exports.locateFaces = exports.ssdMobilenetv1;
 exports.detectLandmarks = exports.detectFaceLandmarks;
 
-},{"../ageGenderNet/AgeGenderNet":200,"../faceExpressionNet/FaceExpressionNet":224,"../faceLandmarkNet/FaceLandmark68Net":236,"../faceLandmarkNet/FaceLandmark68TinyNet":238,"../faceRecognitionNet/FaceRecognitionNet":244,"../mtcnn/Mtcnn":272,"../ssdMobilenetv1/SsdMobilenetv1":293,"../tinyFaceDetector/TinyFaceDetector":304,"../tinyYolov2":310}],270:[function(require,module,exports){
+},{"../ageGenderNet/AgeGenderNet":201,"../faceExpressionNet/FaceExpressionNet":269,"../faceLandmarkNet/FaceLandmark68Net":281,"../faceLandmarkNet/FaceLandmark68TinyNet":283,"../faceRecognitionNet/FaceRecognitionNet":289,"../mtcnn/Mtcnn":316,"../ssdMobilenetv1/SsdMobilenetv1":344,"../tinyFaceDetector/TinyFaceDetector":355,"../tinyYolov2":368}],315:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
 var tf = require("@tensorflow/tfjs-core");
 exports.tf = tf;
-var tfjs_image_recognition_base_1 = require("tfjs-image-recognition-base");
-var drawExtended = require("./draw");
-tslib_1.__exportStar(require("tfjs-image-recognition-base"), exports);
-tslib_1.__exportStar(require("./ageGenderNet/index"), exports);
-var draw = tslib_1.__assign(tslib_1.__assign({}, tfjs_image_recognition_base_1.draw), drawExtended);
+var draw = require("./draw");
 exports.draw = draw;
+var utils = require("./utils");
+exports.utils = utils;
+tslib_1.__exportStar(require("./ageGenderNet/index"), exports);
 tslib_1.__exportStar(require("./classes/index"), exports);
 tslib_1.__exportStar(require("./dom/index"), exports);
+tslib_1.__exportStar(require("./env/index"), exports);
 tslib_1.__exportStar(require("./faceExpressionNet/index"), exports);
 tslib_1.__exportStar(require("./faceLandmarkNet/index"), exports);
 tslib_1.__exportStar(require("./faceRecognitionNet/index"), exports);
 tslib_1.__exportStar(require("./factories/index"), exports);
 tslib_1.__exportStar(require("./globalApi/index"), exports);
 tslib_1.__exportStar(require("./mtcnn/index"), exports);
+tslib_1.__exportStar(require("./ops/index"), exports);
 tslib_1.__exportStar(require("./ssdMobilenetv1/index"), exports);
 tslib_1.__exportStar(require("./tinyFaceDetector/index"), exports);
 tslib_1.__exportStar(require("./tinyYolov2/index"), exports);
 tslib_1.__exportStar(require("./euclideanDistance"), exports);
+tslib_1.__exportStar(require("./NeuralNetwork"), exports);
 tslib_1.__exportStar(require("./resizeResults"), exports);
 
-},{"./ageGenderNet/index":203,"./classes/index":211,"./dom/index":217,"./draw":222,"./euclideanDistance":223,"./faceExpressionNet/index":226,"./faceLandmarkNet/index":239,"./faceRecognitionNet/index":248,"./factories/index":257,"./globalApi/index":268,"./mtcnn/index":284,"./resizeResults":292,"./ssdMobilenetv1/index":298,"./tinyFaceDetector/index":307,"./tinyYolov2/index":310,"@tensorflow/tfjs-core":100,"tfjs-image-recognition-base":372,"tslib":392}],271:[function(require,module,exports){
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-var tfjs_image_recognition_base_1 = require("tfjs-image-recognition-base");
-function minBbox(pts) {
-    var xs = pts.map(function (pt) { return pt.x; });
-    var ys = pts.map(function (pt) { return pt.y; });
-    var minX = xs.reduce(function (min, x) { return x < min ? x : min; }, Infinity);
-    var minY = ys.reduce(function (min, y) { return y < min ? y : min; }, Infinity);
-    var maxX = xs.reduce(function (max, x) { return max < x ? x : max; }, 0);
-    var maxY = ys.reduce(function (max, y) { return max < y ? y : max; }, 0);
-    return new tfjs_image_recognition_base_1.BoundingBox(minX, minY, maxX, maxY);
-}
-exports.minBbox = minBbox;
-
-},{"tfjs-image-recognition-base":372}],272:[function(require,module,exports){
+},{"./NeuralNetwork":200,"./ageGenderNet/index":204,"./classes/index":220,"./dom/index":248,"./draw":261,"./env/index":265,"./euclideanDistance":268,"./faceExpressionNet/index":271,"./faceLandmarkNet/index":284,"./faceRecognitionNet/index":293,"./factories/index":302,"./globalApi/index":313,"./mtcnn/index":328,"./ops/index":336,"./resizeResults":343,"./ssdMobilenetv1/index":349,"./tinyFaceDetector/index":358,"./tinyYolov2/index":368,"./utils":370,"@tensorflow/tfjs-core":100,"tslib":385}],316:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
 var tf = require("@tensorflow/tfjs-core");
-var tfjs_image_recognition_base_1 = require("tfjs-image-recognition-base");
+var classes_1 = require("../classes");
 var FaceDetection_1 = require("../classes/FaceDetection");
 var FaceLandmarks5_1 = require("../classes/FaceLandmarks5");
+var dom_1 = require("../dom");
 var factories_1 = require("../factories");
+var NeuralNetwork_1 = require("../NeuralNetwork");
 var bgrToRgbTensor_1 = require("./bgrToRgbTensor");
 var config_1 = require("./config");
 var extractParams_1 = require("./extractParams");
@@ -39601,6 +41309,22 @@ var Mtcnn = /** @class */ (function (_super) {
     function Mtcnn() {
         return _super.call(this, 'Mtcnn') || this;
     }
+    Mtcnn.prototype.load = function (weightsOrUrl) {
+        return tslib_1.__awaiter(this, void 0, void 0, function () {
+            return tslib_1.__generator(this, function (_a) {
+                console.warn('mtcnn is deprecated and will be removed soon');
+                return [2 /*return*/, _super.prototype.load.call(this, weightsOrUrl)];
+            });
+        });
+    };
+    Mtcnn.prototype.loadFromDisk = function (filePath) {
+        return tslib_1.__awaiter(this, void 0, void 0, function () {
+            return tslib_1.__generator(this, function (_a) {
+                console.warn('mtcnn is deprecated and will be removed soon');
+                return [2 /*return*/, _super.prototype.loadFromDisk.call(this, filePath)];
+            });
+        });
+    };
     Mtcnn.prototype.forwardInput = function (input, forwardParams) {
         if (forwardParams === void 0) { forwardParams = {}; }
         return tslib_1.__awaiter(this, void 0, void 0, function () {
@@ -39662,10 +41386,10 @@ var Mtcnn = /** @class */ (function (_super) {
                     case 3:
                         out3 = _c.sent();
                         stats.total_stage3 = Date.now() - ts;
-                        results = out3.boxes.map(function (box, idx) { return factories_1.extendWithFaceLandmarks(factories_1.extendWithFaceDetection({}, new FaceDetection_1.FaceDetection(out3.scores[idx], new tfjs_image_recognition_base_1.Rect(box.left / width, box.top / height, box.width / width, box.height / height), {
+                        results = out3.boxes.map(function (box, idx) { return factories_1.extendWithFaceLandmarks(factories_1.extendWithFaceDetection({}, new FaceDetection_1.FaceDetection(out3.scores[idx], new classes_1.Rect(box.left / width, box.top / height, box.width / width, box.height / height), {
                             height: height,
                             width: width
-                        })), new FaceLandmarks5_1.FaceLandmarks5(out3.points[idx].map(function (pt) { return pt.sub(new tfjs_image_recognition_base_1.Point(box.left, box.top)).div(new tfjs_image_recognition_base_1.Point(box.width, box.height)); }), { width: box.width, height: box.height })); });
+                        })), new FaceLandmarks5_1.FaceLandmarks5(out3.points[idx].map(function (pt) { return pt.sub(new classes_1.Point(box.left, box.top)).div(new classes_1.Point(box.width, box.height)); }), { width: box.width, height: box.height })); });
                         return [2 /*return*/, onReturn({ results: results, stats: stats })];
                 }
             });
@@ -39679,7 +41403,7 @@ var Mtcnn = /** @class */ (function (_super) {
                 switch (_b.label) {
                     case 0:
                         _a = this.forwardInput;
-                        return [4 /*yield*/, tfjs_image_recognition_base_1.toNetInput(input)];
+                        return [4 /*yield*/, dom_1.toNetInput(input)];
                     case 1: return [4 /*yield*/, _a.apply(this, [_b.sent(),
                             forwardParams])];
                     case 2: return [2 /*return*/, (_b.sent()).results];
@@ -39695,7 +41419,7 @@ var Mtcnn = /** @class */ (function (_super) {
                 switch (_b.label) {
                     case 0:
                         _a = this.forwardInput;
-                        return [4 /*yield*/, tfjs_image_recognition_base_1.toNetInput(input)];
+                        return [4 /*yield*/, dom_1.toNetInput(input)];
                     case 1: return [2 /*return*/, _a.apply(this, [_b.sent(),
                             forwardParams])];
                 }
@@ -39712,24 +41436,24 @@ var Mtcnn = /** @class */ (function (_super) {
         return extractParams_1.extractParams(weights);
     };
     return Mtcnn;
-}(tfjs_image_recognition_base_1.NeuralNetwork));
+}(NeuralNetwork_1.NeuralNetwork));
 exports.Mtcnn = Mtcnn;
 
-},{"../classes/FaceDetection":205,"../classes/FaceLandmarks5":207,"../factories":257,"./MtcnnOptions":274,"./bgrToRgbTensor":278,"./config":279,"./extractParams":281,"./extractParamsFromWeigthMap":282,"./getSizesForScale":283,"./pyramidDown":287,"./stage1":289,"./stage2":290,"./stage3":291,"@tensorflow/tfjs-core":100,"tfjs-image-recognition-base":372,"tslib":392}],273:[function(require,module,exports){
+},{"../NeuralNetwork":200,"../classes":220,"../classes/FaceDetection":209,"../classes/FaceLandmarks5":211,"../dom":248,"../factories":302,"./MtcnnOptions":318,"./bgrToRgbTensor":322,"./config":323,"./extractParams":325,"./extractParamsFromWeigthMap":326,"./getSizesForScale":327,"./pyramidDown":331,"./stage1":333,"./stage2":334,"./stage3":335,"@tensorflow/tfjs-core":100,"tslib":385}],317:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
-var tfjs_image_recognition_base_1 = require("tfjs-image-recognition-base");
+var classes_1 = require("../classes");
 var MtcnnBox = /** @class */ (function (_super) {
     tslib_1.__extends(MtcnnBox, _super);
     function MtcnnBox(left, top, right, bottom) {
         return _super.call(this, { left: left, top: top, right: right, bottom: bottom }, true) || this;
     }
     return MtcnnBox;
-}(tfjs_image_recognition_base_1.Box));
+}(classes_1.Box));
 exports.MtcnnBox = MtcnnBox;
 
-},{"tfjs-image-recognition-base":372,"tslib":392}],274:[function(require,module,exports){
+},{"../classes":220,"tslib":385}],318:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var MtcnnOptions = /** @class */ (function () {
@@ -39789,11 +41513,11 @@ var MtcnnOptions = /** @class */ (function () {
 }());
 exports.MtcnnOptions = MtcnnOptions;
 
-},{}],275:[function(require,module,exports){
+},{}],319:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tf = require("@tensorflow/tfjs-core");
-var tfjs_image_recognition_base_1 = require("tfjs-image-recognition-base");
+var common_1 = require("../common");
 var fullyConnectedLayer_1 = require("../common/fullyConnectedLayer");
 var prelu_1 = require("./prelu");
 var sharedLayers_1 = require("./sharedLayers");
@@ -39801,7 +41525,7 @@ function ONet(x, params) {
     return tf.tidy(function () {
         var out = sharedLayers_1.sharedLayer(x, params);
         out = tf.maxPool(out, [2, 2], [2, 2], 'same');
-        out = tfjs_image_recognition_base_1.TfjsImageRecognitionBase.convLayer(out, params.conv4, 'valid');
+        out = common_1.convLayer(out, params.conv4, 'valid');
         out = prelu_1.prelu(out, params.prelu4_alpha);
         var vectorized = tf.reshape(out, [out.shape[0], params.fc1.weights.shape[0]]);
         var fc1 = fullyConnectedLayer_1.fullyConnectedLayer(vectorized, params.fc1);
@@ -39817,25 +41541,25 @@ function ONet(x, params) {
 }
 exports.ONet = ONet;
 
-},{"../common/fullyConnectedLayer":213,"./prelu":286,"./sharedLayers":288,"@tensorflow/tfjs-core":100,"tfjs-image-recognition-base":372}],276:[function(require,module,exports){
+},{"../common":231,"../common/fullyConnectedLayer":229,"./prelu":330,"./sharedLayers":332,"@tensorflow/tfjs-core":100}],320:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tf = require("@tensorflow/tfjs-core");
-var tfjs_image_recognition_base_1 = require("tfjs-image-recognition-base");
+var common_1 = require("../common");
 var sharedLayers_1 = require("./sharedLayers");
 function PNet(x, params) {
     return tf.tidy(function () {
         var out = sharedLayers_1.sharedLayer(x, params, true);
-        var conv = tfjs_image_recognition_base_1.TfjsImageRecognitionBase.convLayer(out, params.conv4_1, 'valid');
+        var conv = common_1.convLayer(out, params.conv4_1, 'valid');
         var max = tf.expandDims(tf.max(conv, 3), 3);
         var prob = tf.softmax(tf.sub(conv, max), 3);
-        var regions = tfjs_image_recognition_base_1.TfjsImageRecognitionBase.convLayer(out, params.conv4_2, 'valid');
+        var regions = common_1.convLayer(out, params.conv4_2, 'valid');
         return { prob: prob, regions: regions };
     });
 }
 exports.PNet = PNet;
 
-},{"./sharedLayers":288,"@tensorflow/tfjs-core":100,"tfjs-image-recognition-base":372}],277:[function(require,module,exports){
+},{"../common":231,"./sharedLayers":332,"@tensorflow/tfjs-core":100}],321:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tf = require("@tensorflow/tfjs-core");
@@ -39858,7 +41582,7 @@ function RNet(x, params) {
 }
 exports.RNet = RNet;
 
-},{"../common/fullyConnectedLayer":213,"./prelu":286,"./sharedLayers":288,"@tensorflow/tfjs-core":100}],278:[function(require,module,exports){
+},{"../common/fullyConnectedLayer":229,"./prelu":330,"./sharedLayers":332,"@tensorflow/tfjs-core":100}],322:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tf = require("@tensorflow/tfjs-core");
@@ -39867,18 +41591,19 @@ function bgrToRgbTensor(tensor) {
 }
 exports.bgrToRgbTensor = bgrToRgbTensor;
 
-},{"@tensorflow/tfjs-core":100}],279:[function(require,module,exports){
+},{"@tensorflow/tfjs-core":100}],323:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CELL_STRIDE = 2;
 exports.CELL_SIZE = 12;
 
-},{}],280:[function(require,module,exports){
+},{}],324:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
 var tf = require("@tensorflow/tfjs-core");
-var tfjs_image_recognition_base_1 = require("tfjs-image-recognition-base");
+var dom_1 = require("../dom");
+var env_1 = require("../env");
 var normalize_1 = require("./normalize");
 function extractImagePatches(img, boxes, _a) {
     var width = _a.width, height = _a.height;
@@ -39888,7 +41613,7 @@ function extractImagePatches(img, boxes, _a) {
         return tslib_1.__generator(this, function (_b) {
             switch (_b.label) {
                 case 0:
-                    imgCtx = tfjs_image_recognition_base_1.getContext2dOrThrow(img);
+                    imgCtx = dom_1.getContext2dOrThrow(img);
                     return [4 /*yield*/, Promise.all(boxes.map(function (box) { return tslib_1.__awaiter(_this, void 0, void 0, function () {
                             var _a, y, ey, x, ex, fromX, fromY, imgData;
                             return tslib_1.__generator(this, function (_b) {
@@ -39896,15 +41621,15 @@ function extractImagePatches(img, boxes, _a) {
                                 fromX = x - 1;
                                 fromY = y - 1;
                                 imgData = imgCtx.getImageData(fromX, fromY, (ex - fromX), (ey - fromY));
-                                return [2 /*return*/, tfjs_image_recognition_base_1.env.isNodejs() ? tfjs_image_recognition_base_1.createCanvasFromMedia(imgData) : createImageBitmap(imgData)];
+                                return [2 /*return*/, env_1.env.isNodejs() ? dom_1.createCanvasFromMedia(imgData) : createImageBitmap(imgData)];
                             });
                         }); }))];
                 case 1:
                     bitmaps = _b.sent();
                     imagePatchesDatas = [];
                     bitmaps.forEach(function (bmp) {
-                        var patch = tfjs_image_recognition_base_1.createCanvas({ width: width, height: height });
-                        var patchCtx = tfjs_image_recognition_base_1.getContext2dOrThrow(patch);
+                        var patch = dom_1.createCanvas({ width: width, height: height });
+                        var patchCtx = dom_1.getContext2dOrThrow(patch);
                         patchCtx.drawImage(bmp, 0, 0, width, height);
                         var data = patchCtx.getImageData(0, 0, width, height).data;
                         var currData = [];
@@ -39929,15 +41654,15 @@ function extractImagePatches(img, boxes, _a) {
 }
 exports.extractImagePatches = extractImagePatches;
 
-},{"./normalize":285,"@tensorflow/tfjs-core":100,"tfjs-image-recognition-base":372,"tslib":392}],281:[function(require,module,exports){
+},{"../dom":248,"../env":265,"./normalize":329,"@tensorflow/tfjs-core":100,"tslib":385}],325:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
 var tf = require("@tensorflow/tfjs-core");
-var tfjs_image_recognition_base_1 = require("tfjs-image-recognition-base");
+var common_1 = require("../common");
 function extractorsFactory(extractWeights, paramMappings) {
-    var extractConvParams = tfjs_image_recognition_base_1.TfjsImageRecognitionBase.extractConvParamsFactory(extractWeights, paramMappings);
-    var extractFCParams = tfjs_image_recognition_base_1.TfjsImageRecognitionBase.extractFCParamsFactory(extractWeights, paramMappings);
+    var extractConvParams = common_1.extractConvParamsFactory(extractWeights, paramMappings);
+    var extractFCParams = common_1.extractFCParamsFactory(extractWeights, paramMappings);
     function extractPReluParams(size, paramPath) {
         var alpha = tf.tensor1d(extractWeights(size));
         paramMappings.push({ paramPath: paramPath });
@@ -39985,7 +41710,7 @@ function extractorsFactory(extractWeights, paramMappings) {
     };
 }
 function extractParams(weights) {
-    var _a = tfjs_image_recognition_base_1.TfjsImageRecognitionBase.extractWeightsFactory(weights), extractWeights = _a.extractWeights, getRemainingWeights = _a.getRemainingWeights;
+    var _a = common_1.extractWeightsFactory(weights), extractWeights = _a.extractWeights, getRemainingWeights = _a.getRemainingWeights;
     var paramMappings = [];
     var _b = extractorsFactory(extractWeights, paramMappings), extractPNetParams = _b.extractPNetParams, extractRNetParams = _b.extractRNetParams, extractONetParams = _b.extractONetParams;
     var pnet = extractPNetParams();
@@ -39998,13 +41723,13 @@ function extractParams(weights) {
 }
 exports.extractParams = extractParams;
 
-},{"@tensorflow/tfjs-core":100,"tfjs-image-recognition-base":372,"tslib":392}],282:[function(require,module,exports){
+},{"../common":231,"@tensorflow/tfjs-core":100,"tslib":385}],326:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
-var tfjs_image_recognition_base_1 = require("tfjs-image-recognition-base");
+var common_1 = require("../common");
 function extractorsFactory(weightMap, paramMappings) {
-    var extractWeightEntry = tfjs_image_recognition_base_1.TfjsImageRecognitionBase.extractWeightEntryFactory(weightMap, paramMappings);
+    var extractWeightEntry = common_1.extractWeightEntryFactory(weightMap, paramMappings);
     function extractConvParams(prefix) {
         var filters = extractWeightEntry(prefix + "/weights", 4, prefix + "/filters");
         var bias = extractWeightEntry(prefix + "/bias", 1);
@@ -40064,12 +41789,12 @@ function extractParamsFromWeigthMap(weightMap) {
     var pnet = extractPNetParams();
     var rnet = extractRNetParams();
     var onet = extractONetParams();
-    tfjs_image_recognition_base_1.TfjsImageRecognitionBase.disposeUnusedWeightTensors(weightMap, paramMappings);
+    common_1.disposeUnusedWeightTensors(weightMap, paramMappings);
     return { params: { pnet: pnet, rnet: rnet, onet: onet }, paramMappings: paramMappings };
 }
 exports.extractParamsFromWeigthMap = extractParamsFromWeigthMap;
 
-},{"tfjs-image-recognition-base":372,"tslib":392}],283:[function(require,module,exports){
+},{"../common":231,"tslib":385}],327:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 function getSizesForScale(scale, _a) {
@@ -40081,7 +41806,7 @@ function getSizesForScale(scale, _a) {
 }
 exports.getSizesForScale = getSizesForScale;
 
-},{}],284:[function(require,module,exports){
+},{}],328:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -40095,7 +41820,7 @@ function createMtcnn(weights) {
 }
 exports.createMtcnn = createMtcnn;
 
-},{"./Mtcnn":272,"./MtcnnOptions":274,"tslib":392}],285:[function(require,module,exports){
+},{"./Mtcnn":316,"./MtcnnOptions":318,"tslib":385}],329:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tf = require("@tensorflow/tfjs-core");
@@ -40104,7 +41829,7 @@ function normalize(x) {
 }
 exports.normalize = normalize;
 
-},{"@tensorflow/tfjs-core":100}],286:[function(require,module,exports){
+},{"@tensorflow/tfjs-core":100}],330:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tf = require("@tensorflow/tfjs-core");
@@ -40115,7 +41840,7 @@ function prelu(x, alpha) {
 }
 exports.prelu = prelu;
 
-},{"@tensorflow/tfjs-core":100}],287:[function(require,module,exports){
+},{"@tensorflow/tfjs-core":100}],331:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var config_1 = require("./config");
@@ -40134,33 +41859,34 @@ function pyramidDown(minFaceSize, scaleFactor, dims) {
 }
 exports.pyramidDown = pyramidDown;
 
-},{"./config":279}],288:[function(require,module,exports){
+},{"./config":323}],332:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tf = require("@tensorflow/tfjs-core");
-var tfjs_image_recognition_base_1 = require("tfjs-image-recognition-base");
+var common_1 = require("../common");
 var prelu_1 = require("./prelu");
 function sharedLayer(x, params, isPnet) {
     if (isPnet === void 0) { isPnet = false; }
     return tf.tidy(function () {
-        var out = tfjs_image_recognition_base_1.TfjsImageRecognitionBase.convLayer(x, params.conv1, 'valid');
+        var out = common_1.convLayer(x, params.conv1, 'valid');
         out = prelu_1.prelu(out, params.prelu1_alpha);
         out = tf.maxPool(out, isPnet ? [2, 2] : [3, 3], [2, 2], 'same');
-        out = tfjs_image_recognition_base_1.TfjsImageRecognitionBase.convLayer(out, params.conv2, 'valid');
+        out = common_1.convLayer(out, params.conv2, 'valid');
         out = prelu_1.prelu(out, params.prelu2_alpha);
         out = isPnet ? out : tf.maxPool(out, [3, 3], [2, 2], 'valid');
-        out = tfjs_image_recognition_base_1.TfjsImageRecognitionBase.convLayer(out, params.conv3, 'valid');
+        out = common_1.convLayer(out, params.conv3, 'valid');
         out = prelu_1.prelu(out, params.prelu3_alpha);
         return out;
     });
 }
 exports.sharedLayer = sharedLayer;
 
-},{"./prelu":286,"@tensorflow/tfjs-core":100,"tfjs-image-recognition-base":372}],289:[function(require,module,exports){
+},{"../common":231,"./prelu":330,"@tensorflow/tfjs-core":100}],333:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tf = require("@tensorflow/tfjs-core");
-var tfjs_image_recognition_base_1 = require("tfjs-image-recognition-base");
+var classes_1 = require("../classes");
+var ops_1 = require("../ops");
 var config_1 = require("./config");
 var getSizesForScale_1 = require("./getSizesForScale");
 var MtcnnBox_1 = require("./MtcnnBox");
@@ -40181,12 +41907,12 @@ function extractBoundingBoxes(scoresTensor, regionsTensor, scale, scoreThreshold
     for (var y = 0; y < scoresTensor.shape[0]; y++) {
         for (var x = 0; x < scoresTensor.shape[1]; x++) {
             if (scoresData[y][x] >= scoreThreshold) {
-                indices.push(new tfjs_image_recognition_base_1.Point(x, y));
+                indices.push(new classes_1.Point(x, y));
             }
         }
     }
     var boundingBoxes = indices.map(function (idx) {
-        var cell = new tfjs_image_recognition_base_1.BoundingBox(Math.round((idx.y * config_1.CELL_STRIDE + 1) / scale), Math.round((idx.x * config_1.CELL_STRIDE + 1) / scale), Math.round((idx.y * config_1.CELL_STRIDE + config_1.CELL_SIZE) / scale), Math.round((idx.x * config_1.CELL_STRIDE + config_1.CELL_SIZE) / scale));
+        var cell = new classes_1.BoundingBox(Math.round((idx.y * config_1.CELL_STRIDE + 1) / scale), Math.round((idx.x * config_1.CELL_STRIDE + 1) / scale), Math.round((idx.y * config_1.CELL_STRIDE + config_1.CELL_SIZE) / scale), Math.round((idx.x * config_1.CELL_STRIDE + config_1.CELL_SIZE) / scale));
         var score = scoresData[idx.y][idx.x];
         var regionsData = regionsTensor.arraySync();
         var region = new MtcnnBox_1.MtcnnBox(regionsData[idx.y][idx.x][0], regionsData[idx.y][idx.x][1], regionsData[idx.y][idx.x][2], regionsData[idx.y][idx.x][3]);
@@ -40225,7 +41951,7 @@ function stage1(imgTensor, scales, scoreThreshold, params, stats) {
             return [];
         }
         var ts = Date.now();
-        var indices = tfjs_image_recognition_base_1.nonMaxSuppression(boundingBoxes.map(function (bbox) { return bbox.cell; }), boundingBoxes.map(function (bbox) { return bbox.score; }), 0.5);
+        var indices = ops_1.nonMaxSuppression(boundingBoxes.map(function (bbox) { return bbox.cell; }), boundingBoxes.map(function (bbox) { return bbox.score; }), 0.5);
         statsForScale.nms = Date.now() - ts;
         statsForScale.numBoxes = indices.length;
         stats.stage1.push(statsForScale);
@@ -40236,14 +41962,14 @@ function stage1(imgTensor, scales, scoreThreshold, params, stats) {
     var finalScores = [];
     if (allBoxes.length > 0) {
         var ts = Date.now();
-        var indices = tfjs_image_recognition_base_1.nonMaxSuppression(allBoxes.map(function (bbox) { return bbox.cell; }), allBoxes.map(function (bbox) { return bbox.score; }), 0.7);
+        var indices = ops_1.nonMaxSuppression(allBoxes.map(function (bbox) { return bbox.cell; }), allBoxes.map(function (bbox) { return bbox.score; }), 0.7);
         stats.stage1_nms = Date.now() - ts;
         finalScores = indices.map(function (idx) { return allBoxes[idx].score; });
         finalBoxes = indices
             .map(function (idx) { return allBoxes[idx]; })
             .map(function (_a) {
             var cell = _a.cell, region = _a.region;
-            return new tfjs_image_recognition_base_1.BoundingBox(cell.left + (region.left * cell.width), cell.top + (region.top * cell.height), cell.right + (region.right * cell.width), cell.bottom + (region.bottom * cell.height)).toSquare().round();
+            return new classes_1.BoundingBox(cell.left + (region.left * cell.width), cell.top + (region.top * cell.height), cell.right + (region.right * cell.width), cell.bottom + (region.bottom * cell.height)).toSquare().round();
         });
     }
     return {
@@ -40253,12 +41979,12 @@ function stage1(imgTensor, scales, scoreThreshold, params, stats) {
 }
 exports.stage1 = stage1;
 
-},{"./MtcnnBox":273,"./PNet":276,"./config":279,"./getSizesForScale":283,"./normalize":285,"@tensorflow/tfjs-core":100,"tfjs-image-recognition-base":372}],290:[function(require,module,exports){
+},{"../classes":220,"../ops":336,"./MtcnnBox":317,"./PNet":320,"./config":323,"./getSizesForScale":327,"./normalize":329,"@tensorflow/tfjs-core":100}],334:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
 var tf = require("@tensorflow/tfjs-core");
-var tfjs_image_recognition_base_1 = require("tfjs-image-recognition-base");
+var ops_1 = require("../ops");
 var extractImagePatches_1 = require("./extractImagePatches");
 var MtcnnBox_1 = require("./MtcnnBox");
 var RNet_1 = require("./RNet");
@@ -40301,7 +42027,7 @@ function stage2(img, inputBoxes, scoreThreshold, params, stats) {
                     finalScores = [];
                     if (filteredBoxes.length > 0) {
                         ts = Date.now();
-                        indicesNms = tfjs_image_recognition_base_1.nonMaxSuppression(filteredBoxes, filteredScores, 0.7);
+                        indicesNms = ops_1.nonMaxSuppression(filteredBoxes, filteredScores, 0.7);
                         stats.stage2_nms = Date.now() - ts;
                         regions_1 = indicesNms.map(function (idx) {
                             var regionsData = rnetOuts[indices[idx]].regions.arraySync();
@@ -40324,12 +42050,13 @@ function stage2(img, inputBoxes, scoreThreshold, params, stats) {
 }
 exports.stage2 = stage2;
 
-},{"./MtcnnBox":273,"./RNet":277,"./extractImagePatches":280,"@tensorflow/tfjs-core":100,"tfjs-image-recognition-base":372,"tslib":392}],291:[function(require,module,exports){
+},{"../ops":336,"./MtcnnBox":317,"./RNet":321,"./extractImagePatches":324,"@tensorflow/tfjs-core":100,"tslib":385}],335:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
 var tf = require("@tensorflow/tfjs-core");
-var tfjs_image_recognition_base_1 = require("tfjs-image-recognition-base");
+var classes_1 = require("../classes");
+var ops_1 = require("../ops");
 var extractImagePatches_1 = require("./extractImagePatches");
 var MtcnnBox_1 = require("./MtcnnBox");
 var ONet_1 = require("./ONet");
@@ -40378,14 +42105,14 @@ function stage3(img, inputBoxes, scoreThreshold, params, stats) {
                     points = [];
                     if (filteredBoxes.length > 0) {
                         ts = Date.now();
-                        indicesNms = tfjs_image_recognition_base_1.nonMaxSuppression(filteredBoxes, filteredScores, 0.7, false);
+                        indicesNms = ops_1.nonMaxSuppression(filteredBoxes, filteredScores, 0.7, false);
                         stats.stage3_nms = Date.now() - ts;
                         finalBoxes = indicesNms.map(function (idx) { return filteredBoxes[idx]; });
                         finalScores = indicesNms.map(function (idx) { return filteredScores[idx]; });
                         points = indicesNms.map(function (idx, i) {
                             return Array(5).fill(0).map(function (_, ptIdx) {
                                 var pointsData = onetOuts[idx].points.arraySync();
-                                return new tfjs_image_recognition_base_1.Point(((pointsData[0][ptIdx] * (finalBoxes[i].width + 1)) + finalBoxes[i].left), ((pointsData[0][ptIdx + 5] * (finalBoxes[i].height + 1)) + finalBoxes[i].top));
+                                return new classes_1.Point(((pointsData[0][ptIdx] * (finalBoxes[i].width + 1)) + finalBoxes[i].left), ((pointsData[0][ptIdx + 5] * (finalBoxes[i].height + 1)) + finalBoxes[i].top));
                             });
                         });
                     }
@@ -40405,16 +42132,171 @@ function stage3(img, inputBoxes, scoreThreshold, params, stats) {
 }
 exports.stage3 = stage3;
 
-},{"./MtcnnBox":273,"./ONet":275,"./extractImagePatches":280,"@tensorflow/tfjs-core":100,"tfjs-image-recognition-base":372,"tslib":392}],292:[function(require,module,exports){
+},{"../classes":220,"../ops":336,"./MtcnnBox":317,"./ONet":319,"./extractImagePatches":324,"@tensorflow/tfjs-core":100,"tslib":385}],336:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-var tfjs_image_recognition_base_1 = require("tfjs-image-recognition-base");
+var tslib_1 = require("tslib");
+tslib_1.__exportStar(require("./iou"), exports);
+tslib_1.__exportStar(require("./minBbox"), exports);
+tslib_1.__exportStar(require("./nonMaxSuppression"), exports);
+tslib_1.__exportStar(require("./normalize"), exports);
+tslib_1.__exportStar(require("./padToSquare"), exports);
+tslib_1.__exportStar(require("./shuffleArray"), exports);
+function sigmoid(x) {
+    return 1 / (1 + Math.exp(-x));
+}
+exports.sigmoid = sigmoid;
+function inverseSigmoid(x) {
+    return Math.log(x / (1 - x));
+}
+exports.inverseSigmoid = inverseSigmoid;
+
+},{"./iou":337,"./minBbox":338,"./nonMaxSuppression":339,"./normalize":340,"./padToSquare":341,"./shuffleArray":342,"tslib":385}],337:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+function iou(box1, box2, isIOU) {
+    if (isIOU === void 0) { isIOU = true; }
+    var width = Math.max(0.0, Math.min(box1.right, box2.right) - Math.max(box1.left, box2.left));
+    var height = Math.max(0.0, Math.min(box1.bottom, box2.bottom) - Math.max(box1.top, box2.top));
+    var interSection = width * height;
+    return isIOU
+        ? interSection / (box1.area + box2.area - interSection)
+        : interSection / Math.min(box1.area, box2.area);
+}
+exports.iou = iou;
+
+},{}],338:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var classes_1 = require("../classes");
+function minBbox(pts) {
+    var xs = pts.map(function (pt) { return pt.x; });
+    var ys = pts.map(function (pt) { return pt.y; });
+    var minX = xs.reduce(function (min, x) { return x < min ? x : min; }, Infinity);
+    var minY = ys.reduce(function (min, y) { return y < min ? y : min; }, Infinity);
+    var maxX = xs.reduce(function (max, x) { return max < x ? x : max; }, 0);
+    var maxY = ys.reduce(function (max, y) { return max < y ? y : max; }, 0);
+    return new classes_1.BoundingBox(minX, minY, maxX, maxY);
+}
+exports.minBbox = minBbox;
+
+},{"../classes":220}],339:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var iou_1 = require("./iou");
+function nonMaxSuppression(boxes, scores, iouThreshold, isIOU) {
+    if (isIOU === void 0) { isIOU = true; }
+    var indicesSortedByScore = scores
+        .map(function (score, boxIndex) { return ({ score: score, boxIndex: boxIndex }); })
+        .sort(function (c1, c2) { return c1.score - c2.score; })
+        .map(function (c) { return c.boxIndex; });
+    var pick = [];
+    var _loop_1 = function () {
+        var curr = indicesSortedByScore.pop();
+        pick.push(curr);
+        var indices = indicesSortedByScore;
+        var outputs = [];
+        for (var i = 0; i < indices.length; i++) {
+            var idx = indices[i];
+            var currBox = boxes[curr];
+            var idxBox = boxes[idx];
+            outputs.push(iou_1.iou(currBox, idxBox, isIOU));
+        }
+        indicesSortedByScore = indicesSortedByScore.filter(function (_, j) { return outputs[j] <= iouThreshold; });
+    };
+    while (indicesSortedByScore.length > 0) {
+        _loop_1();
+    }
+    return pick;
+}
+exports.nonMaxSuppression = nonMaxSuppression;
+
+},{"./iou":337}],340:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var tslib_1 = require("tslib");
+var tf = require("@tensorflow/tfjs-core");
+function normalize(x, meanRgb) {
+    return tf.tidy(function () {
+        var r = meanRgb[0], g = meanRgb[1], b = meanRgb[2];
+        var avg_r = tf.fill(tslib_1.__spreadArrays(x.shape.slice(0, 3), [1]), r);
+        var avg_g = tf.fill(tslib_1.__spreadArrays(x.shape.slice(0, 3), [1]), g);
+        var avg_b = tf.fill(tslib_1.__spreadArrays(x.shape.slice(0, 3), [1]), b);
+        var avg_rgb = tf.concat([avg_r, avg_g, avg_b], 3);
+        return tf.sub(x, avg_rgb);
+    });
+}
+exports.normalize = normalize;
+
+},{"@tensorflow/tfjs-core":100,"tslib":385}],341:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var tf = require("@tensorflow/tfjs-core");
+/**
+ * Pads the smaller dimension of an image tensor with zeros, such that width === height.
+ *
+ * @param imgTensor The image tensor.
+ * @param isCenterImage (optional, default: false) If true, add an equal amount of padding on
+ * both sides of the minor dimension oof the image.
+ * @returns The padded tensor with width === height.
+ */
+function padToSquare(imgTensor, isCenterImage) {
+    if (isCenterImage === void 0) { isCenterImage = false; }
+    return tf.tidy(function () {
+        var _a = imgTensor.shape.slice(1), height = _a[0], width = _a[1];
+        if (height === width) {
+            return imgTensor;
+        }
+        var dimDiff = Math.abs(height - width);
+        var paddingAmount = Math.round(dimDiff * (isCenterImage ? 0.5 : 1));
+        var paddingAxis = height > width ? 2 : 1;
+        var createPaddingTensor = function (paddingAmount) {
+            var paddingTensorShape = imgTensor.shape.slice();
+            paddingTensorShape[paddingAxis] = paddingAmount;
+            return tf.fill(paddingTensorShape, 0);
+        };
+        var paddingTensorAppend = createPaddingTensor(paddingAmount);
+        var remainingPaddingAmount = dimDiff - paddingTensorAppend.shape[paddingAxis];
+        var paddingTensorPrepend = isCenterImage && remainingPaddingAmount
+            ? createPaddingTensor(remainingPaddingAmount)
+            : null;
+        var tensorsToStack = [
+            paddingTensorPrepend,
+            imgTensor,
+            paddingTensorAppend
+        ]
+            .filter(function (t) { return !!t; })
+            .map(function (t) { return t.toFloat(); });
+        return tf.concat(tensorsToStack, paddingAxis);
+    });
+}
+exports.padToSquare = padToSquare;
+
+},{"@tensorflow/tfjs-core":100}],342:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+function shuffleArray(inputArray) {
+    var array = inputArray.slice();
+    for (var i = array.length - 1; i > 0; i--) {
+        var j = Math.floor(Math.random() * (i + 1));
+        var x = array[i];
+        array[i] = array[j];
+        array[j] = x;
+    }
+    return array;
+}
+exports.shuffleArray = shuffleArray;
+
+},{}],343:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var classes_1 = require("./classes");
 var FaceDetection_1 = require("./classes/FaceDetection");
 var FaceLandmarks_1 = require("./classes/FaceLandmarks");
 var WithFaceDetection_1 = require("./factories/WithFaceDetection");
 var WithFaceLandmarks_1 = require("./factories/WithFaceLandmarks");
 function resizeResults(results, dimensions) {
-    var _a = new tfjs_image_recognition_base_1.Dimensions(dimensions.width, dimensions.height), width = _a.width, height = _a.height;
+    var _a = new classes_1.Dimensions(dimensions.width, dimensions.height), width = _a.width, height = _a.height;
     if (width <= 0 || height <= 0) {
         throw new Error("resizeResults - invalid dimensions: " + JSON.stringify({ width: width, height: height }));
     }
@@ -40436,13 +42318,15 @@ function resizeResults(results, dimensions) {
 }
 exports.resizeResults = resizeResults;
 
-},{"./classes/FaceDetection":205,"./classes/FaceLandmarks":206,"./factories/WithFaceDetection":253,"./factories/WithFaceLandmarks":255,"tfjs-image-recognition-base":372}],293:[function(require,module,exports){
+},{"./classes":220,"./classes/FaceDetection":209,"./classes/FaceLandmarks":210,"./factories/WithFaceDetection":298,"./factories/WithFaceLandmarks":300}],344:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
 var tf = require("@tensorflow/tfjs-core");
-var tfjs_image_recognition_base_1 = require("tfjs-image-recognition-base");
+var classes_1 = require("../classes");
 var FaceDetection_1 = require("../classes/FaceDetection");
+var dom_1 = require("../dom");
+var NeuralNetwork_1 = require("../NeuralNetwork");
 var extractParams_1 = require("./extractParams");
 var extractParamsFromWeigthMap_1 = require("./extractParamsFromWeigthMap");
 var mobileNetV1_1 = require("./mobileNetV1");
@@ -40475,7 +42359,7 @@ var SsdMobilenetv1 = /** @class */ (function (_super) {
                 switch (_b.label) {
                     case 0:
                         _a = this.forwardInput;
-                        return [4 /*yield*/, tfjs_image_recognition_base_1.toNetInput(input)];
+                        return [4 /*yield*/, dom_1.toNetInput(input)];
                     case 1: return [2 /*return*/, _a.apply(this, [_b.sent()])];
                 }
             });
@@ -40489,7 +42373,7 @@ var SsdMobilenetv1 = /** @class */ (function (_super) {
                 switch (_e.label) {
                     case 0:
                         _a = new SsdMobilenetv1Options_1.SsdMobilenetv1Options(options), maxResults = _a.maxResults, minConfidence = _a.minConfidence;
-                        return [4 /*yield*/, tfjs_image_recognition_base_1.toNetInput(input)];
+                        return [4 /*yield*/, dom_1.toNetInput(input)];
                     case 1:
                         netInput = _e.sent();
                         _b = this.forwardInput(netInput), _boxes = _b.boxes, _scores = _b.scores;
@@ -40520,7 +42404,7 @@ var SsdMobilenetv1 = /** @class */ (function (_super) {
                                 Math.max(0, boxesData[idx][1]),
                                 Math.min(1.0, boxesData[idx][3])
                             ].map(function (val) { return val * padX; }), left = _b[0], right = _b[1];
-                            return new FaceDetection_1.FaceDetection(scoresData[idx], new tfjs_image_recognition_base_1.Rect(left, top, right - left, bottom - top), {
+                            return new FaceDetection_1.FaceDetection(scoresData[idx], new classes_1.Rect(left, top, right - left, bottom - top), {
                                 height: netInput.getInputHeight(0),
                                 width: netInput.getInputWidth(0)
                             });
@@ -40542,10 +42426,10 @@ var SsdMobilenetv1 = /** @class */ (function (_super) {
         return extractParams_1.extractParams(weights);
     };
     return SsdMobilenetv1;
-}(tfjs_image_recognition_base_1.NeuralNetwork));
+}(NeuralNetwork_1.NeuralNetwork));
 exports.SsdMobilenetv1 = SsdMobilenetv1;
 
-},{"../classes/FaceDetection":205,"./SsdMobilenetv1Options":294,"./extractParams":296,"./extractParamsFromWeigthMap":297,"./mobileNetV1":299,"./nonMaxSuppression":300,"./outputLayer":301,"./predictionLayer":303,"@tensorflow/tfjs-core":100,"tfjs-image-recognition-base":372,"tslib":392}],294:[function(require,module,exports){
+},{"../NeuralNetwork":200,"../classes":220,"../classes/FaceDetection":209,"../dom":248,"./SsdMobilenetv1Options":345,"./extractParams":347,"./extractParamsFromWeigthMap":348,"./mobileNetV1":350,"./nonMaxSuppression":351,"./outputLayer":352,"./predictionLayer":354,"@tensorflow/tfjs-core":100,"tslib":385}],345:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var SsdMobilenetv1Options = /** @class */ (function () {
@@ -40575,16 +42459,16 @@ var SsdMobilenetv1Options = /** @class */ (function () {
 }());
 exports.SsdMobilenetv1Options = SsdMobilenetv1Options;
 
-},{}],295:[function(require,module,exports){
+},{}],346:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tf = require("@tensorflow/tfjs-core");
-var tfjs_image_recognition_base_1 = require("tfjs-image-recognition-base");
+var common_1 = require("../common");
 function boxPredictionLayer(x, params) {
     return tf.tidy(function () {
         var batchSize = x.shape[0];
-        var boxPredictionEncoding = tf.reshape(tfjs_image_recognition_base_1.TfjsImageRecognitionBase.convLayer(x, params.box_encoding_predictor), [batchSize, -1, 1, 4]);
-        var classPrediction = tf.reshape(tfjs_image_recognition_base_1.TfjsImageRecognitionBase.convLayer(x, params.class_predictor), [batchSize, -1, 3]);
+        var boxPredictionEncoding = tf.reshape(common_1.convLayer(x, params.box_encoding_predictor), [batchSize, -1, 1, 4]);
+        var classPrediction = tf.reshape(common_1.convLayer(x, params.class_predictor), [batchSize, -1, 3]);
         return {
             boxPredictionEncoding: boxPredictionEncoding,
             classPrediction: classPrediction
@@ -40593,11 +42477,11 @@ function boxPredictionLayer(x, params) {
 }
 exports.boxPredictionLayer = boxPredictionLayer;
 
-},{"@tensorflow/tfjs-core":100,"tfjs-image-recognition-base":372}],296:[function(require,module,exports){
+},{"../common":231,"@tensorflow/tfjs-core":100}],347:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tf = require("@tensorflow/tfjs-core");
-var tfjs_image_recognition_base_1 = require("tfjs-image-recognition-base");
+var common_1 = require("../common");
 function extractorsFactory(extractWeights, paramMappings) {
     function extractDepthwiseConvParams(numChannels, mappedPrefix) {
         var filters = tf.tensor4d(extractWeights(3 * 3 * numChannels), [3, 3, numChannels, 1]);
@@ -40733,7 +42617,7 @@ function extractorsFactory(extractWeights, paramMappings) {
 }
 function extractParams(weights) {
     var paramMappings = [];
-    var _a = tfjs_image_recognition_base_1.TfjsImageRecognitionBase.extractWeightsFactory(weights), extractWeights = _a.extractWeights, getRemainingWeights = _a.getRemainingWeights;
+    var _a = common_1.extractWeightsFactory(weights), extractWeights = _a.extractWeights, getRemainingWeights = _a.getRemainingWeights;
     var _b = extractorsFactory(extractWeights, paramMappings), extractMobilenetV1Params = _b.extractMobilenetV1Params, extractPredictionLayerParams = _b.extractPredictionLayerParams;
     var mobilenetv1 = extractMobilenetV1Params();
     var prediction_layer = extractPredictionLayerParams();
@@ -40756,12 +42640,13 @@ function extractParams(weights) {
 }
 exports.extractParams = extractParams;
 
-},{"@tensorflow/tfjs-core":100,"tfjs-image-recognition-base":372}],297:[function(require,module,exports){
+},{"../common":231,"@tensorflow/tfjs-core":100}],348:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-var tfjs_image_recognition_base_1 = require("tfjs-image-recognition-base");
+var common_1 = require("../common");
+var utils_1 = require("../utils");
 function extractorsFactory(weightMap, paramMappings) {
-    var extractWeightEntry = tfjs_image_recognition_base_1.TfjsImageRecognitionBase.extractWeightEntryFactory(weightMap, paramMappings);
+    var extractWeightEntry = common_1.extractWeightEntryFactory(weightMap, paramMappings);
     function extractPointwiseConvParams(prefix, idx, mappedPrefix) {
         var filters = extractWeightEntry(prefix + "/Conv2d_" + idx + "_pointwise/weights", 4, mappedPrefix + "/filters");
         var batch_norm_offset = extractWeightEntry(prefix + "/Conv2d_" + idx + "_pointwise/convolution_bn_offset", 1, mappedPrefix + "/batch_norm_offset");
@@ -40844,7 +42729,7 @@ function extractParamsFromWeigthMap(weightMap) {
     var _a = extractorsFactory(weightMap, paramMappings), extractMobilenetV1Params = _a.extractMobilenetV1Params, extractPredictionLayerParams = _a.extractPredictionLayerParams;
     var extra_dim = weightMap['Output/extra_dim'];
     paramMappings.push({ originalPath: 'Output/extra_dim', paramPath: 'output_layer/extra_dim' });
-    if (!tfjs_image_recognition_base_1.isTensor3D(extra_dim)) {
+    if (!utils_1.isTensor3D(extra_dim)) {
         throw new Error("expected weightMap['Output/extra_dim'] to be a Tensor3D, instead have " + extra_dim);
     }
     var params = {
@@ -40854,12 +42739,12 @@ function extractParamsFromWeigthMap(weightMap) {
             extra_dim: extra_dim
         }
     };
-    tfjs_image_recognition_base_1.TfjsImageRecognitionBase.disposeUnusedWeightTensors(weightMap, paramMappings);
+    common_1.disposeUnusedWeightTensors(weightMap, paramMappings);
     return { params: params, paramMappings: paramMappings };
 }
 exports.extractParamsFromWeigthMap = extractParamsFromWeigthMap;
 
-},{"tfjs-image-recognition-base":372}],298:[function(require,module,exports){
+},{"../common":231,"../utils":370}],349:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -40886,7 +42771,7 @@ var FaceDetectionNet = /** @class */ (function (_super) {
 }(SsdMobilenetv1_1.SsdMobilenetv1));
 exports.FaceDetectionNet = FaceDetectionNet;
 
-},{"./SsdMobilenetv1":293,"./SsdMobilenetv1Options":294,"tslib":392}],299:[function(require,module,exports){
+},{"./SsdMobilenetv1":344,"./SsdMobilenetv1Options":345,"tslib":385}],350:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tf = require("@tensorflow/tfjs-core");
@@ -40941,7 +42826,7 @@ function mobileNetV1(x, params) {
 }
 exports.mobileNetV1 = mobileNetV1;
 
-},{"./pointwiseConvLayer":302,"@tensorflow/tfjs-core":100}],300:[function(require,module,exports){
+},{"./pointwiseConvLayer":353,"@tensorflow/tfjs-core":100}],351:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 function nonMaxSuppression(boxes, scores, maxOutputSize, iouThreshold, scoreThreshold) {
@@ -40999,7 +42884,7 @@ function IOU(boxes, i, j) {
     return intersectionArea / (areaI + areaJ - intersectionArea);
 }
 
-},{}],301:[function(require,module,exports){
+},{}],352:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tf = require("@tensorflow/tfjs-core");
@@ -41050,7 +42935,7 @@ function outputLayer(boxPredictions, classPredictions, params) {
 }
 exports.outputLayer = outputLayer;
 
-},{"@tensorflow/tfjs-core":100}],302:[function(require,module,exports){
+},{"@tensorflow/tfjs-core":100}],353:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tf = require("@tensorflow/tfjs-core");
@@ -41063,7 +42948,7 @@ function pointwiseConvLayer(x, params, strides) {
 }
 exports.pointwiseConvLayer = pointwiseConvLayer;
 
-},{"@tensorflow/tfjs-core":100}],303:[function(require,module,exports){
+},{"@tensorflow/tfjs-core":100}],354:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tf = require("@tensorflow/tfjs-core");
@@ -41109,12 +42994,12 @@ function predictionLayer(x, conv11, params) {
 }
 exports.predictionLayer = predictionLayer;
 
-},{"./boxPredictionLayer":295,"./pointwiseConvLayer":302,"@tensorflow/tfjs-core":100}],304:[function(require,module,exports){
+},{"./boxPredictionLayer":346,"./pointwiseConvLayer":353,"@tensorflow/tfjs-core":100}],355:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
-var tfjs_image_recognition_base_1 = require("tfjs-image-recognition-base");
 var classes_1 = require("../classes");
+var TinyYolov2Base_1 = require("../tinyYolov2/TinyYolov2Base");
 var const_1 = require("./const");
 var TinyFaceDetector = /** @class */ (function (_super) {
     tslib_1.__extends(TinyFaceDetector, _super);
@@ -41159,14 +43044,14 @@ var TinyFaceDetector = /** @class */ (function (_super) {
         return _super.prototype.extractParamsFromWeigthMap.call(this, weightMap);
     };
     return TinyFaceDetector;
-}(tfjs_image_recognition_base_1.TfjsImageRecognitionBase.TinyYolov2));
+}(TinyYolov2Base_1.TinyYolov2Base));
 exports.TinyFaceDetector = TinyFaceDetector;
 
-},{"../classes":211,"./const":306,"tfjs-image-recognition-base":372,"tslib":392}],305:[function(require,module,exports){
+},{"../classes":220,"../tinyYolov2/TinyYolov2Base":360,"./const":357,"tslib":385}],356:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
-var tfjs_image_recognition_base_1 = require("tfjs-image-recognition-base");
+var tinyYolov2_1 = require("../tinyYolov2");
 var TinyFaceDetectorOptions = /** @class */ (function (_super) {
     tslib_1.__extends(TinyFaceDetectorOptions, _super);
     function TinyFaceDetectorOptions() {
@@ -41175,24 +43060,24 @@ var TinyFaceDetectorOptions = /** @class */ (function (_super) {
         return _this;
     }
     return TinyFaceDetectorOptions;
-}(tfjs_image_recognition_base_1.TfjsImageRecognitionBase.TinyYolov2Options));
+}(tinyYolov2_1.TinyYolov2Options));
 exports.TinyFaceDetectorOptions = TinyFaceDetectorOptions;
 
-},{"tfjs-image-recognition-base":372,"tslib":392}],306:[function(require,module,exports){
+},{"../tinyYolov2":368,"tslib":385}],357:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-var tfjs_image_recognition_base_1 = require("tfjs-image-recognition-base");
+var classes_1 = require("../classes");
 exports.IOU_THRESHOLD = 0.4;
 exports.BOX_ANCHORS = [
-    new tfjs_image_recognition_base_1.Point(1.603231, 2.094468),
-    new tfjs_image_recognition_base_1.Point(6.041143, 7.080126),
-    new tfjs_image_recognition_base_1.Point(2.882459, 3.518061),
-    new tfjs_image_recognition_base_1.Point(4.266906, 5.178857),
-    new tfjs_image_recognition_base_1.Point(9.041765, 10.66308)
+    new classes_1.Point(1.603231, 2.094468),
+    new classes_1.Point(6.041143, 7.080126),
+    new classes_1.Point(2.882459, 3.518061),
+    new classes_1.Point(4.266906, 5.178857),
+    new classes_1.Point(9.041765, 10.66308)
 ];
 exports.MEAN_RGB = [117.001, 114.697, 97.404];
 
-},{"tfjs-image-recognition-base":372}],307:[function(require,module,exports){
+},{"../classes":220}],358:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -41206,13 +43091,13 @@ function createTinyFaceDetector(weights) {
 }
 exports.createTinyFaceDetector = createTinyFaceDetector;
 
-},{"./TinyFaceDetector":304,"./TinyFaceDetectorOptions":305,"tslib":392}],308:[function(require,module,exports){
+},{"./TinyFaceDetector":355,"./TinyFaceDetectorOptions":356,"tslib":385}],359:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
-var tfjs_image_recognition_base_1 = require("tfjs-image-recognition-base");
 var classes_1 = require("../classes");
 var const_1 = require("./const");
+var TinyYolov2Base_1 = require("./TinyYolov2Base");
 var TinyYolov2 = /** @class */ (function (_super) {
     tslib_1.__extends(TinyYolov2, _super);
     function TinyYolov2(withSeparableConvs) {
@@ -41268,37 +43153,550 @@ var TinyYolov2 = /** @class */ (function (_super) {
         return _super.prototype.extractParamsFromWeigthMap.call(this, weightMap);
     };
     return TinyYolov2;
-}(tfjs_image_recognition_base_1.TfjsImageRecognitionBase.TinyYolov2));
+}(TinyYolov2Base_1.TinyYolov2Base));
 exports.TinyYolov2 = TinyYolov2;
 
-},{"../classes":211,"./const":309,"tfjs-image-recognition-base":372,"tslib":392}],309:[function(require,module,exports){
+},{"../classes":220,"./TinyYolov2Base":360,"./const":363,"tslib":385}],360:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-var tfjs_image_recognition_base_1 = require("tfjs-image-recognition-base");
+var tslib_1 = require("tslib");
+var tf = require("@tensorflow/tfjs-core");
+var BoundingBox_1 = require("../classes/BoundingBox");
+var ObjectDetection_1 = require("../classes/ObjectDetection");
+var common_1 = require("../common");
+var dom_1 = require("../dom");
+var NeuralNetwork_1 = require("../NeuralNetwork");
+var ops_1 = require("../ops");
+var nonMaxSuppression_1 = require("../ops/nonMaxSuppression");
+var normalize_1 = require("../ops/normalize");
+var config_1 = require("./config");
+var convWithBatchNorm_1 = require("./convWithBatchNorm");
+var depthwiseSeparableConv_1 = require("./depthwiseSeparableConv");
+var extractParams_1 = require("./extractParams");
+var extractParamsFromWeigthMap_1 = require("./extractParamsFromWeigthMap");
+var leaky_1 = require("./leaky");
+var TinyYolov2Options_1 = require("./TinyYolov2Options");
+var TinyYolov2Base = /** @class */ (function (_super) {
+    tslib_1.__extends(TinyYolov2Base, _super);
+    function TinyYolov2Base(config) {
+        var _this = _super.call(this, 'TinyYolov2') || this;
+        config_1.validateConfig(config);
+        _this._config = config;
+        return _this;
+    }
+    Object.defineProperty(TinyYolov2Base.prototype, "config", {
+        get: function () {
+            return this._config;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(TinyYolov2Base.prototype, "withClassScores", {
+        get: function () {
+            return this.config.withClassScores || this.config.classes.length > 1;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(TinyYolov2Base.prototype, "boxEncodingSize", {
+        get: function () {
+            return 5 + (this.withClassScores ? this.config.classes.length : 0);
+        },
+        enumerable: true,
+        configurable: true
+    });
+    TinyYolov2Base.prototype.runTinyYolov2 = function (x, params) {
+        var out = convWithBatchNorm_1.convWithBatchNorm(x, params.conv0);
+        out = tf.maxPool(out, [2, 2], [2, 2], 'same');
+        out = convWithBatchNorm_1.convWithBatchNorm(out, params.conv1);
+        out = tf.maxPool(out, [2, 2], [2, 2], 'same');
+        out = convWithBatchNorm_1.convWithBatchNorm(out, params.conv2);
+        out = tf.maxPool(out, [2, 2], [2, 2], 'same');
+        out = convWithBatchNorm_1.convWithBatchNorm(out, params.conv3);
+        out = tf.maxPool(out, [2, 2], [2, 2], 'same');
+        out = convWithBatchNorm_1.convWithBatchNorm(out, params.conv4);
+        out = tf.maxPool(out, [2, 2], [2, 2], 'same');
+        out = convWithBatchNorm_1.convWithBatchNorm(out, params.conv5);
+        out = tf.maxPool(out, [2, 2], [1, 1], 'same');
+        out = convWithBatchNorm_1.convWithBatchNorm(out, params.conv6);
+        out = convWithBatchNorm_1.convWithBatchNorm(out, params.conv7);
+        return common_1.convLayer(out, params.conv8, 'valid', false);
+    };
+    TinyYolov2Base.prototype.runMobilenet = function (x, params) {
+        var out = this.config.isFirstLayerConv2d
+            ? leaky_1.leaky(common_1.convLayer(x, params.conv0, 'valid', false))
+            : depthwiseSeparableConv_1.depthwiseSeparableConv(x, params.conv0);
+        out = tf.maxPool(out, [2, 2], [2, 2], 'same');
+        out = depthwiseSeparableConv_1.depthwiseSeparableConv(out, params.conv1);
+        out = tf.maxPool(out, [2, 2], [2, 2], 'same');
+        out = depthwiseSeparableConv_1.depthwiseSeparableConv(out, params.conv2);
+        out = tf.maxPool(out, [2, 2], [2, 2], 'same');
+        out = depthwiseSeparableConv_1.depthwiseSeparableConv(out, params.conv3);
+        out = tf.maxPool(out, [2, 2], [2, 2], 'same');
+        out = depthwiseSeparableConv_1.depthwiseSeparableConv(out, params.conv4);
+        out = tf.maxPool(out, [2, 2], [2, 2], 'same');
+        out = depthwiseSeparableConv_1.depthwiseSeparableConv(out, params.conv5);
+        out = tf.maxPool(out, [2, 2], [1, 1], 'same');
+        out = params.conv6 ? depthwiseSeparableConv_1.depthwiseSeparableConv(out, params.conv6) : out;
+        out = params.conv7 ? depthwiseSeparableConv_1.depthwiseSeparableConv(out, params.conv7) : out;
+        return common_1.convLayer(out, params.conv8, 'valid', false);
+    };
+    TinyYolov2Base.prototype.forwardInput = function (input, inputSize) {
+        var _this = this;
+        var params = this.params;
+        if (!params) {
+            throw new Error('TinyYolov2 - load model before inference');
+        }
+        return tf.tidy(function () {
+            var batchTensor = input.toBatchTensor(inputSize, false).toFloat();
+            batchTensor = _this.config.meanRgb
+                ? normalize_1.normalize(batchTensor, _this.config.meanRgb)
+                : batchTensor;
+            batchTensor = batchTensor.div(tf.scalar(256));
+            return _this.config.withSeparableConvs
+                ? _this.runMobilenet(batchTensor, params)
+                : _this.runTinyYolov2(batchTensor, params);
+        });
+    };
+    TinyYolov2Base.prototype.forward = function (input, inputSize) {
+        return tslib_1.__awaiter(this, void 0, void 0, function () {
+            var _a;
+            return tslib_1.__generator(this, function (_b) {
+                switch (_b.label) {
+                    case 0:
+                        _a = this.forwardInput;
+                        return [4 /*yield*/, dom_1.toNetInput(input)];
+                    case 1: return [4 /*yield*/, _a.apply(this, [_b.sent(), inputSize])];
+                    case 2: return [2 /*return*/, _b.sent()];
+                }
+            });
+        });
+    };
+    TinyYolov2Base.prototype.detect = function (input, forwardParams) {
+        if (forwardParams === void 0) { forwardParams = {}; }
+        return tslib_1.__awaiter(this, void 0, void 0, function () {
+            var _a, inputSize, scoreThreshold, netInput, out, out0, inputDimensions, results, boxes, scores, classScores, classNames, indices, detections;
+            var _this = this;
+            return tslib_1.__generator(this, function (_b) {
+                switch (_b.label) {
+                    case 0:
+                        _a = new TinyYolov2Options_1.TinyYolov2Options(forwardParams), inputSize = _a.inputSize, scoreThreshold = _a.scoreThreshold;
+                        return [4 /*yield*/, dom_1.toNetInput(input)];
+                    case 1:
+                        netInput = _b.sent();
+                        return [4 /*yield*/, this.forwardInput(netInput, inputSize)];
+                    case 2:
+                        out = _b.sent();
+                        out0 = tf.tidy(function () { return tf.unstack(out)[0].expandDims(); });
+                        inputDimensions = {
+                            width: netInput.getInputWidth(0),
+                            height: netInput.getInputHeight(0)
+                        };
+                        return [4 /*yield*/, this.extractBoxes(out0, netInput.getReshapedInputDimensions(0), scoreThreshold)];
+                    case 3:
+                        results = _b.sent();
+                        out.dispose();
+                        out0.dispose();
+                        boxes = results.map(function (res) { return res.box; });
+                        scores = results.map(function (res) { return res.score; });
+                        classScores = results.map(function (res) { return res.classScore; });
+                        classNames = results.map(function (res) { return _this.config.classes[res.label]; });
+                        indices = nonMaxSuppression_1.nonMaxSuppression(boxes.map(function (box) { return box.rescale(inputSize); }), scores, this.config.iouThreshold, true);
+                        detections = indices.map(function (idx) {
+                            return new ObjectDetection_1.ObjectDetection(scores[idx], classScores[idx], classNames[idx], boxes[idx], inputDimensions);
+                        });
+                        return [2 /*return*/, detections];
+                }
+            });
+        });
+    };
+    TinyYolov2Base.prototype.getDefaultModelName = function () {
+        return '';
+    };
+    TinyYolov2Base.prototype.extractParamsFromWeigthMap = function (weightMap) {
+        return extractParamsFromWeigthMap_1.extractParamsFromWeigthMap(weightMap, this.config);
+    };
+    TinyYolov2Base.prototype.extractParams = function (weights) {
+        var filterSizes = this.config.filterSizes || TinyYolov2Base.DEFAULT_FILTER_SIZES;
+        var numFilters = filterSizes ? filterSizes.length : undefined;
+        if (numFilters !== 7 && numFilters !== 8 && numFilters !== 9) {
+            throw new Error("TinyYolov2 - expected 7 | 8 | 9 convolutional filters, but found " + numFilters + " filterSizes in config");
+        }
+        return extractParams_1.extractParams(weights, this.config, this.boxEncodingSize, filterSizes);
+    };
+    TinyYolov2Base.prototype.extractBoxes = function (outputTensor, inputBlobDimensions, scoreThreshold) {
+        return tslib_1.__awaiter(this, void 0, void 0, function () {
+            var width, height, inputSize, correctionFactorX, correctionFactorY, numCells, numBoxes, _a, boxesTensor, scoresTensor, classScoresTensor, results, scoresData, boxesData, row, col, anchor, score, ctX, ctY, width_1, height_1, x, y, pos, _b, classScore, label, _c;
+            var _this = this;
+            return tslib_1.__generator(this, function (_d) {
+                switch (_d.label) {
+                    case 0:
+                        width = inputBlobDimensions.width, height = inputBlobDimensions.height;
+                        inputSize = Math.max(width, height);
+                        correctionFactorX = inputSize / width;
+                        correctionFactorY = inputSize / height;
+                        numCells = outputTensor.shape[1];
+                        numBoxes = this.config.anchors.length;
+                        _a = tf.tidy(function () {
+                            var reshaped = outputTensor.reshape([numCells, numCells, numBoxes, _this.boxEncodingSize]);
+                            var boxes = reshaped.slice([0, 0, 0, 0], [numCells, numCells, numBoxes, 4]);
+                            var scores = reshaped.slice([0, 0, 0, 4], [numCells, numCells, numBoxes, 1]);
+                            var classScores = _this.withClassScores
+                                ? tf.softmax(reshaped.slice([0, 0, 0, 5], [numCells, numCells, numBoxes, _this.config.classes.length]), 3)
+                                : tf.scalar(0);
+                            return [boxes, scores, classScores];
+                        }), boxesTensor = _a[0], scoresTensor = _a[1], classScoresTensor = _a[2];
+                        results = [];
+                        return [4 /*yield*/, scoresTensor.array()];
+                    case 1:
+                        scoresData = _d.sent();
+                        return [4 /*yield*/, boxesTensor.array()];
+                    case 2:
+                        boxesData = _d.sent();
+                        row = 0;
+                        _d.label = 3;
+                    case 3:
+                        if (!(row < numCells)) return [3 /*break*/, 12];
+                        col = 0;
+                        _d.label = 4;
+                    case 4:
+                        if (!(col < numCells)) return [3 /*break*/, 11];
+                        anchor = 0;
+                        _d.label = 5;
+                    case 5:
+                        if (!(anchor < numBoxes)) return [3 /*break*/, 10];
+                        score = ops_1.sigmoid(scoresData[row][col][anchor][0]);
+                        if (!(!scoreThreshold || score > scoreThreshold)) return [3 /*break*/, 9];
+                        ctX = ((col + ops_1.sigmoid(boxesData[row][col][anchor][0])) / numCells) * correctionFactorX;
+                        ctY = ((row + ops_1.sigmoid(boxesData[row][col][anchor][1])) / numCells) * correctionFactorY;
+                        width_1 = ((Math.exp(boxesData[row][col][anchor][2]) * this.config.anchors[anchor].x) / numCells) * correctionFactorX;
+                        height_1 = ((Math.exp(boxesData[row][col][anchor][3]) * this.config.anchors[anchor].y) / numCells) * correctionFactorY;
+                        x = (ctX - (width_1 / 2));
+                        y = (ctY - (height_1 / 2));
+                        pos = { row: row, col: col, anchor: anchor };
+                        if (!this.withClassScores) return [3 /*break*/, 7];
+                        return [4 /*yield*/, this.extractPredictedClass(classScoresTensor, pos)];
+                    case 6:
+                        _c = _d.sent();
+                        return [3 /*break*/, 8];
+                    case 7:
+                        _c = { classScore: 1, label: 0 };
+                        _d.label = 8;
+                    case 8:
+                        _b = _c, classScore = _b.classScore, label = _b.label;
+                        results.push(tslib_1.__assign({ box: new BoundingBox_1.BoundingBox(x, y, x + width_1, y + height_1), score: score, classScore: score * classScore, label: label }, pos));
+                        _d.label = 9;
+                    case 9:
+                        anchor++;
+                        return [3 /*break*/, 5];
+                    case 10:
+                        col++;
+                        return [3 /*break*/, 4];
+                    case 11:
+                        row++;
+                        return [3 /*break*/, 3];
+                    case 12:
+                        boxesTensor.dispose();
+                        scoresTensor.dispose();
+                        classScoresTensor.dispose();
+                        return [2 /*return*/, results];
+                }
+            });
+        });
+    };
+    TinyYolov2Base.prototype.extractPredictedClass = function (classesTensor, pos) {
+        return tslib_1.__awaiter(this, void 0, void 0, function () {
+            var row, col, anchor, classesData;
+            return tslib_1.__generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        row = pos.row, col = pos.col, anchor = pos.anchor;
+                        return [4 /*yield*/, classesTensor.array()];
+                    case 1:
+                        classesData = _a.sent();
+                        return [2 /*return*/, Array(this.config.classes.length).fill(0)
+                                .map(function (_, i) { return classesData[row][col][anchor][i]; })
+                                .map(function (classScore, label) { return ({
+                                classScore: classScore,
+                                label: label
+                            }); })
+                                .reduce(function (max, curr) { return max.classScore > curr.classScore ? max : curr; })];
+                }
+            });
+        });
+    };
+    TinyYolov2Base.DEFAULT_FILTER_SIZES = [
+        3, 16, 32, 64, 128, 256, 512, 1024, 1024
+    ];
+    return TinyYolov2Base;
+}(NeuralNetwork_1.NeuralNetwork));
+exports.TinyYolov2Base = TinyYolov2Base;
+
+},{"../NeuralNetwork":200,"../classes/BoundingBox":206,"../classes/ObjectDetection":216,"../common":231,"../dom":248,"../ops":336,"../ops/nonMaxSuppression":339,"../ops/normalize":340,"./TinyYolov2Options":361,"./config":362,"./convWithBatchNorm":364,"./depthwiseSeparableConv":365,"./extractParams":366,"./extractParamsFromWeigthMap":367,"./leaky":369,"@tensorflow/tfjs-core":100,"tslib":385}],361:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var TinyYolov2SizeType;
+(function (TinyYolov2SizeType) {
+    TinyYolov2SizeType[TinyYolov2SizeType["XS"] = 224] = "XS";
+    TinyYolov2SizeType[TinyYolov2SizeType["SM"] = 320] = "SM";
+    TinyYolov2SizeType[TinyYolov2SizeType["MD"] = 416] = "MD";
+    TinyYolov2SizeType[TinyYolov2SizeType["LG"] = 608] = "LG";
+})(TinyYolov2SizeType = exports.TinyYolov2SizeType || (exports.TinyYolov2SizeType = {}));
+var TinyYolov2Options = /** @class */ (function () {
+    function TinyYolov2Options(_a) {
+        var _b = _a === void 0 ? {} : _a, inputSize = _b.inputSize, scoreThreshold = _b.scoreThreshold;
+        this._name = 'TinyYolov2Options';
+        this._inputSize = inputSize || 416;
+        this._scoreThreshold = scoreThreshold || 0.5;
+        if (typeof this._inputSize !== 'number' || this._inputSize % 32 !== 0) {
+            throw new Error(this._name + " - expected inputSize to be a number divisible by 32");
+        }
+        if (typeof this._scoreThreshold !== 'number' || this._scoreThreshold <= 0 || this._scoreThreshold >= 1) {
+            throw new Error(this._name + " - expected scoreThreshold to be a number between 0 and 1");
+        }
+    }
+    Object.defineProperty(TinyYolov2Options.prototype, "inputSize", {
+        get: function () { return this._inputSize; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(TinyYolov2Options.prototype, "scoreThreshold", {
+        get: function () { return this._scoreThreshold; },
+        enumerable: true,
+        configurable: true
+    });
+    return TinyYolov2Options;
+}());
+exports.TinyYolov2Options = TinyYolov2Options;
+
+},{}],362:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var isNumber = function (arg) { return typeof arg === 'number'; };
+function validateConfig(config) {
+    if (!config) {
+        throw new Error("invalid config: " + config);
+    }
+    if (typeof config.withSeparableConvs !== 'boolean') {
+        throw new Error("config.withSeparableConvs has to be a boolean, have: " + config.withSeparableConvs);
+    }
+    if (!isNumber(config.iouThreshold) || config.iouThreshold < 0 || config.iouThreshold > 1.0) {
+        throw new Error("config.iouThreshold has to be a number between [0, 1], have: " + config.iouThreshold);
+    }
+    if (!Array.isArray(config.classes)
+        || !config.classes.length
+        || !config.classes.every(function (c) { return typeof c === 'string'; })) {
+        throw new Error("config.classes has to be an array class names: string[], have: " + JSON.stringify(config.classes));
+    }
+    if (!Array.isArray(config.anchors)
+        || !config.anchors.length
+        || !config.anchors.map(function (a) { return a || {}; }).every(function (a) { return isNumber(a.x) && isNumber(a.y); })) {
+        throw new Error("config.anchors has to be an array of { x: number, y: number }, have: " + JSON.stringify(config.anchors));
+    }
+    if (config.meanRgb && (!Array.isArray(config.meanRgb)
+        || config.meanRgb.length !== 3
+        || !config.meanRgb.every(isNumber))) {
+        throw new Error("config.meanRgb has to be an array of shape [number, number, number], have: " + JSON.stringify(config.meanRgb));
+    }
+}
+exports.validateConfig = validateConfig;
+
+},{}],363:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var classes_1 = require("../classes");
 exports.IOU_THRESHOLD = 0.4;
 exports.BOX_ANCHORS = [
-    new tfjs_image_recognition_base_1.Point(0.738768, 0.874946),
-    new tfjs_image_recognition_base_1.Point(2.42204, 2.65704),
-    new tfjs_image_recognition_base_1.Point(4.30971, 7.04493),
-    new tfjs_image_recognition_base_1.Point(10.246, 4.59428),
-    new tfjs_image_recognition_base_1.Point(12.6868, 11.8741)
+    new classes_1.Point(0.738768, 0.874946),
+    new classes_1.Point(2.42204, 2.65704),
+    new classes_1.Point(4.30971, 7.04493),
+    new classes_1.Point(10.246, 4.59428),
+    new classes_1.Point(12.6868, 11.8741)
 ];
 exports.BOX_ANCHORS_SEPARABLE = [
-    new tfjs_image_recognition_base_1.Point(1.603231, 2.094468),
-    new tfjs_image_recognition_base_1.Point(6.041143, 7.080126),
-    new tfjs_image_recognition_base_1.Point(2.882459, 3.518061),
-    new tfjs_image_recognition_base_1.Point(4.266906, 5.178857),
-    new tfjs_image_recognition_base_1.Point(9.041765, 10.66308)
+    new classes_1.Point(1.603231, 2.094468),
+    new classes_1.Point(6.041143, 7.080126),
+    new classes_1.Point(2.882459, 3.518061),
+    new classes_1.Point(4.266906, 5.178857),
+    new classes_1.Point(9.041765, 10.66308)
 ];
 exports.MEAN_RGB_SEPARABLE = [117.001, 114.697, 97.404];
 exports.DEFAULT_MODEL_NAME = 'tiny_yolov2_model';
 exports.DEFAULT_MODEL_NAME_SEPARABLE_CONV = 'tiny_yolov2_separable_conv_model';
 
-},{"tfjs-image-recognition-base":372}],310:[function(require,module,exports){
+},{"../classes":220}],364:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+var tf = require("@tensorflow/tfjs-core");
+var leaky_1 = require("./leaky");
+function convWithBatchNorm(x, params) {
+    return tf.tidy(function () {
+        var out = tf.pad(x, [[0, 0], [1, 1], [1, 1], [0, 0]]);
+        out = tf.conv2d(out, params.conv.filters, [1, 1], 'valid');
+        out = tf.sub(out, params.bn.sub);
+        out = tf.mul(out, params.bn.truediv);
+        out = tf.add(out, params.conv.bias);
+        return leaky_1.leaky(out);
+    });
+}
+exports.convWithBatchNorm = convWithBatchNorm;
+
+},{"./leaky":369,"@tensorflow/tfjs-core":100}],365:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var tf = require("@tensorflow/tfjs-core");
+var leaky_1 = require("./leaky");
+function depthwiseSeparableConv(x, params) {
+    return tf.tidy(function () {
+        var out = tf.pad(x, [[0, 0], [1, 1], [1, 1], [0, 0]]);
+        out = tf.separableConv2d(out, params.depthwise_filter, params.pointwise_filter, [1, 1], 'valid');
+        out = tf.add(out, params.bias);
+        return leaky_1.leaky(out);
+    });
+}
+exports.depthwiseSeparableConv = depthwiseSeparableConv;
+
+},{"./leaky":369,"@tensorflow/tfjs-core":100}],366:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var tf = require("@tensorflow/tfjs-core");
+var common_1 = require("../common");
+var extractSeparableConvParamsFactory_1 = require("../common/extractSeparableConvParamsFactory");
+var extractWeightsFactory_1 = require("../common/extractWeightsFactory");
+function extractorsFactory(extractWeights, paramMappings) {
+    var extractConvParams = common_1.extractConvParamsFactory(extractWeights, paramMappings);
+    function extractBatchNormParams(size, mappedPrefix) {
+        var sub = tf.tensor1d(extractWeights(size));
+        var truediv = tf.tensor1d(extractWeights(size));
+        paramMappings.push({ paramPath: mappedPrefix + "/sub" }, { paramPath: mappedPrefix + "/truediv" });
+        return { sub: sub, truediv: truediv };
+    }
+    function extractConvWithBatchNormParams(channelsIn, channelsOut, mappedPrefix) {
+        var conv = extractConvParams(channelsIn, channelsOut, 3, mappedPrefix + "/conv");
+        var bn = extractBatchNormParams(channelsOut, mappedPrefix + "/bn");
+        return { conv: conv, bn: bn };
+    }
+    var extractSeparableConvParams = extractSeparableConvParamsFactory_1.extractSeparableConvParamsFactory(extractWeights, paramMappings);
+    return {
+        extractConvParams: extractConvParams,
+        extractConvWithBatchNormParams: extractConvWithBatchNormParams,
+        extractSeparableConvParams: extractSeparableConvParams
+    };
+}
+function extractParams(weights, config, boxEncodingSize, filterSizes) {
+    var _a = extractWeightsFactory_1.extractWeightsFactory(weights), extractWeights = _a.extractWeights, getRemainingWeights = _a.getRemainingWeights;
+    var paramMappings = [];
+    var _b = extractorsFactory(extractWeights, paramMappings), extractConvParams = _b.extractConvParams, extractConvWithBatchNormParams = _b.extractConvWithBatchNormParams, extractSeparableConvParams = _b.extractSeparableConvParams;
+    var params;
+    if (config.withSeparableConvs) {
+        var s0 = filterSizes[0], s1 = filterSizes[1], s2 = filterSizes[2], s3 = filterSizes[3], s4 = filterSizes[4], s5 = filterSizes[5], s6 = filterSizes[6], s7 = filterSizes[7], s8 = filterSizes[8];
+        var conv0 = config.isFirstLayerConv2d
+            ? extractConvParams(s0, s1, 3, 'conv0')
+            : extractSeparableConvParams(s0, s1, 'conv0');
+        var conv1 = extractSeparableConvParams(s1, s2, 'conv1');
+        var conv2 = extractSeparableConvParams(s2, s3, 'conv2');
+        var conv3 = extractSeparableConvParams(s3, s4, 'conv3');
+        var conv4 = extractSeparableConvParams(s4, s5, 'conv4');
+        var conv5 = extractSeparableConvParams(s5, s6, 'conv5');
+        var conv6 = s7 ? extractSeparableConvParams(s6, s7, 'conv6') : undefined;
+        var conv7 = s8 ? extractSeparableConvParams(s7, s8, 'conv7') : undefined;
+        var conv8 = extractConvParams(s8 || s7 || s6, 5 * boxEncodingSize, 1, 'conv8');
+        params = { conv0: conv0, conv1: conv1, conv2: conv2, conv3: conv3, conv4: conv4, conv5: conv5, conv6: conv6, conv7: conv7, conv8: conv8 };
+    }
+    else {
+        var s0 = filterSizes[0], s1 = filterSizes[1], s2 = filterSizes[2], s3 = filterSizes[3], s4 = filterSizes[4], s5 = filterSizes[5], s6 = filterSizes[6], s7 = filterSizes[7], s8 = filterSizes[8];
+        var conv0 = extractConvWithBatchNormParams(s0, s1, 'conv0');
+        var conv1 = extractConvWithBatchNormParams(s1, s2, 'conv1');
+        var conv2 = extractConvWithBatchNormParams(s2, s3, 'conv2');
+        var conv3 = extractConvWithBatchNormParams(s3, s4, 'conv3');
+        var conv4 = extractConvWithBatchNormParams(s4, s5, 'conv4');
+        var conv5 = extractConvWithBatchNormParams(s5, s6, 'conv5');
+        var conv6 = extractConvWithBatchNormParams(s6, s7, 'conv6');
+        var conv7 = extractConvWithBatchNormParams(s7, s8, 'conv7');
+        var conv8 = extractConvParams(s8, 5 * boxEncodingSize, 1, 'conv8');
+        params = { conv0: conv0, conv1: conv1, conv2: conv2, conv3: conv3, conv4: conv4, conv5: conv5, conv6: conv6, conv7: conv7, conv8: conv8 };
+    }
+    if (getRemainingWeights().length !== 0) {
+        throw new Error("weights remaing after extract: " + getRemainingWeights().length);
+    }
+    return { params: params, paramMappings: paramMappings };
+}
+exports.extractParams = extractParams;
+
+},{"../common":231,"../common/extractSeparableConvParamsFactory":226,"../common/extractWeightsFactory":228,"@tensorflow/tfjs-core":100}],367:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var disposeUnusedWeightTensors_1 = require("../common/disposeUnusedWeightTensors");
+var extractSeparableConvParamsFactory_1 = require("../common/extractSeparableConvParamsFactory");
+var extractWeightEntryFactory_1 = require("../common/extractWeightEntryFactory");
+function extractorsFactory(weightMap, paramMappings) {
+    var extractWeightEntry = extractWeightEntryFactory_1.extractWeightEntryFactory(weightMap, paramMappings);
+    function extractBatchNormParams(prefix) {
+        var sub = extractWeightEntry(prefix + "/sub", 1);
+        var truediv = extractWeightEntry(prefix + "/truediv", 1);
+        return { sub: sub, truediv: truediv };
+    }
+    function extractConvParams(prefix) {
+        var filters = extractWeightEntry(prefix + "/filters", 4);
+        var bias = extractWeightEntry(prefix + "/bias", 1);
+        return { filters: filters, bias: bias };
+    }
+    function extractConvWithBatchNormParams(prefix) {
+        var conv = extractConvParams(prefix + "/conv");
+        var bn = extractBatchNormParams(prefix + "/bn");
+        return { conv: conv, bn: bn };
+    }
+    var extractSeparableConvParams = extractSeparableConvParamsFactory_1.loadSeparableConvParamsFactory(extractWeightEntry);
+    return {
+        extractConvParams: extractConvParams,
+        extractConvWithBatchNormParams: extractConvWithBatchNormParams,
+        extractSeparableConvParams: extractSeparableConvParams
+    };
+}
+function extractParamsFromWeigthMap(weightMap, config) {
+    var paramMappings = [];
+    var _a = extractorsFactory(weightMap, paramMappings), extractConvParams = _a.extractConvParams, extractConvWithBatchNormParams = _a.extractConvWithBatchNormParams, extractSeparableConvParams = _a.extractSeparableConvParams;
+    var params;
+    if (config.withSeparableConvs) {
+        var numFilters = (config.filterSizes && config.filterSizes.length || 9);
+        params = {
+            conv0: config.isFirstLayerConv2d ? extractConvParams('conv0') : extractSeparableConvParams('conv0'),
+            conv1: extractSeparableConvParams('conv1'),
+            conv2: extractSeparableConvParams('conv2'),
+            conv3: extractSeparableConvParams('conv3'),
+            conv4: extractSeparableConvParams('conv4'),
+            conv5: extractSeparableConvParams('conv5'),
+            conv6: numFilters > 7 ? extractSeparableConvParams('conv6') : undefined,
+            conv7: numFilters > 8 ? extractSeparableConvParams('conv7') : undefined,
+            conv8: extractConvParams('conv8')
+        };
+    }
+    else {
+        params = {
+            conv0: extractConvWithBatchNormParams('conv0'),
+            conv1: extractConvWithBatchNormParams('conv1'),
+            conv2: extractConvWithBatchNormParams('conv2'),
+            conv3: extractConvWithBatchNormParams('conv3'),
+            conv4: extractConvWithBatchNormParams('conv4'),
+            conv5: extractConvWithBatchNormParams('conv5'),
+            conv6: extractConvWithBatchNormParams('conv6'),
+            conv7: extractConvWithBatchNormParams('conv7'),
+            conv8: extractConvParams('conv8')
+        };
+    }
+    disposeUnusedWeightTensors_1.disposeUnusedWeightTensors(weightMap, paramMappings);
+    return { params: params, paramMappings: paramMappings };
+}
+exports.extractParamsFromWeigthMap = extractParamsFromWeigthMap;
+
+},{"../common/disposeUnusedWeightTensors":223,"../common/extractSeparableConvParamsFactory":226,"../common/extractWeightEntryFactory":227}],368:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var tslib_1 = require("tslib");
 var TinyYolov2_1 = require("./TinyYolov2");
 exports.TinyYolov2 = TinyYolov2_1.TinyYolov2;
+tslib_1.__exportStar(require("./TinyYolov2Options"), exports);
+tslib_1.__exportStar(require("./config"), exports);
 function createTinyYolov2(weights, withSeparableConvs) {
     if (withSeparableConvs === void 0) { withSeparableConvs = true; }
     var net = new TinyYolov2_1.TinyYolov2(withSeparableConvs);
@@ -41307,13 +43705,97 @@ function createTinyYolov2(weights, withSeparableConvs) {
 }
 exports.createTinyYolov2 = createTinyYolov2;
 
-},{"./TinyYolov2":308}],311:[function(require,module,exports){
+},{"./TinyYolov2":359,"./TinyYolov2Options":361,"./config":362,"tslib":385}],369:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var tf = require("@tensorflow/tfjs-core");
+function leaky(x) {
+    return tf.tidy(function () {
+        var min = tf.mul(x, tf.scalar(0.10000000149011612));
+        return tf.add(tf.relu(tf.sub(x, min)), min);
+        //return tf.maximum(x, min)
+    });
+}
+exports.leaky = leaky;
+
+},{"@tensorflow/tfjs-core":100}],370:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var tf = require("@tensorflow/tfjs-core");
+var classes_1 = require("../classes");
+var Dimensions_1 = require("../classes/Dimensions");
+function isTensor(tensor, dim) {
+    return tensor instanceof tf.Tensor && tensor.shape.length === dim;
+}
+exports.isTensor = isTensor;
+function isTensor1D(tensor) {
+    return isTensor(tensor, 1);
+}
+exports.isTensor1D = isTensor1D;
+function isTensor2D(tensor) {
+    return isTensor(tensor, 2);
+}
+exports.isTensor2D = isTensor2D;
+function isTensor3D(tensor) {
+    return isTensor(tensor, 3);
+}
+exports.isTensor3D = isTensor3D;
+function isTensor4D(tensor) {
+    return isTensor(tensor, 4);
+}
+exports.isTensor4D = isTensor4D;
+function isFloat(num) {
+    return num % 1 !== 0;
+}
+exports.isFloat = isFloat;
+function isEven(num) {
+    return num % 2 === 0;
+}
+exports.isEven = isEven;
+function round(num, prec) {
+    if (prec === void 0) { prec = 2; }
+    var f = Math.pow(10, prec);
+    return Math.floor(num * f) / f;
+}
+exports.round = round;
+function isDimensions(obj) {
+    return obj && obj.width && obj.height;
+}
+exports.isDimensions = isDimensions;
+function computeReshapedDimensions(_a, inputSize) {
+    var width = _a.width, height = _a.height;
+    var scale = inputSize / Math.max(height, width);
+    return new Dimensions_1.Dimensions(Math.round(width * scale), Math.round(height * scale));
+}
+exports.computeReshapedDimensions = computeReshapedDimensions;
+function getCenterPoint(pts) {
+    return pts.reduce(function (sum, pt) { return sum.add(pt); }, new classes_1.Point(0, 0))
+        .div(new classes_1.Point(pts.length, pts.length));
+}
+exports.getCenterPoint = getCenterPoint;
+function range(num, start, step) {
+    return Array(num).fill(0).map(function (_, i) { return start + (i * step); });
+}
+exports.range = range;
+function isValidNumber(num) {
+    return !!num && num !== Infinity && num !== -Infinity && !isNaN(num) || num === 0;
+}
+exports.isValidNumber = isValidNumber;
+function isValidProbablitiy(num) {
+    return isValidNumber(num) && 0 <= num && num <= 1.0;
+}
+exports.isValidProbablitiy = isValidProbablitiy;
+
+},{"../classes":220,"../classes/Dimensions":208,"@tensorflow/tfjs-core":100}],371:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
 var tf = require("@tensorflow/tfjs-core");
-var tfjs_image_recognition_base_1 = require("tfjs-image-recognition-base");
-var depthwiseSeparableConv_1 = require("../common/depthwiseSeparableConv");
+var common_1 = require("../common");
+var dom_1 = require("../dom");
+var NeuralNetwork_1 = require("../NeuralNetwork");
+var ops_1 = require("../ops");
+var utils_1 = require("../utils");
 var extractParams_1 = require("./extractParams");
 var extractParamsFromWeigthMap_1 = require("./extractParamsFromWeigthMap");
 function conv(x, params, stride) {
@@ -41322,16 +43804,16 @@ function conv(x, params, stride) {
 function reductionBlock(x, params, isActivateInput) {
     if (isActivateInput === void 0) { isActivateInput = true; }
     var out = isActivateInput ? tf.relu(x) : x;
-    out = depthwiseSeparableConv_1.depthwiseSeparableConv(out, params.separable_conv0, [1, 1]);
-    out = depthwiseSeparableConv_1.depthwiseSeparableConv(tf.relu(out), params.separable_conv1, [1, 1]);
+    out = common_1.depthwiseSeparableConv(out, params.separable_conv0, [1, 1]);
+    out = common_1.depthwiseSeparableConv(tf.relu(out), params.separable_conv1, [1, 1]);
     out = tf.maxPool(out, [3, 3], [2, 2], 'same');
     out = tf.add(out, conv(x, params.expansion_conv, [2, 2]));
     return out;
 }
 function mainBlock(x, params) {
-    var out = depthwiseSeparableConv_1.depthwiseSeparableConv(tf.relu(x), params.separable_conv0, [1, 1]);
-    out = depthwiseSeparableConv_1.depthwiseSeparableConv(tf.relu(out), params.separable_conv1, [1, 1]);
-    out = depthwiseSeparableConv_1.depthwiseSeparableConv(tf.relu(out), params.separable_conv2, [1, 1]);
+    var out = common_1.depthwiseSeparableConv(tf.relu(x), params.separable_conv0, [1, 1]);
+    out = common_1.depthwiseSeparableConv(tf.relu(out), params.separable_conv1, [1, 1]);
+    out = common_1.depthwiseSeparableConv(tf.relu(out), params.separable_conv2, [1, 1]);
     out = tf.add(out, x);
     return out;
 }
@@ -41351,15 +43833,15 @@ var TinyXception = /** @class */ (function (_super) {
         return tf.tidy(function () {
             var batchTensor = input.toBatchTensor(112, true);
             var meanRgb = [122.782, 117.001, 104.298];
-            var normalized = tfjs_image_recognition_base_1.normalize(batchTensor, meanRgb).div(tf.scalar(256));
+            var normalized = ops_1.normalize(batchTensor, meanRgb).div(tf.scalar(256));
             var out = tf.relu(conv(normalized, params.entry_flow.conv_in, [2, 2]));
             out = reductionBlock(out, params.entry_flow.reduction_block_0, false);
             out = reductionBlock(out, params.entry_flow.reduction_block_1);
-            tfjs_image_recognition_base_1.range(_this._numMainBlocks, 0, 1).forEach(function (idx) {
+            utils_1.range(_this._numMainBlocks, 0, 1).forEach(function (idx) {
                 out = mainBlock(out, params.middle_flow["main_block_" + idx]);
             });
             out = reductionBlock(out, params.exit_flow.reduction_block);
-            out = tf.relu(depthwiseSeparableConv_1.depthwiseSeparableConv(out, params.exit_flow.separable_conv, [1, 1]));
+            out = tf.relu(common_1.depthwiseSeparableConv(out, params.exit_flow.separable_conv, [1, 1]));
             return out;
         });
     };
@@ -41370,7 +43852,7 @@ var TinyXception = /** @class */ (function (_super) {
                 switch (_b.label) {
                     case 0:
                         _a = this.forwardInput;
-                        return [4 /*yield*/, tfjs_image_recognition_base_1.toNetInput(input)];
+                        return [4 /*yield*/, dom_1.toNetInput(input)];
                     case 1: return [2 /*return*/, _a.apply(this, [_b.sent()])];
                 }
             });
@@ -41386,16 +43868,17 @@ var TinyXception = /** @class */ (function (_super) {
         return extractParams_1.extractParams(weights, this._numMainBlocks);
     };
     return TinyXception;
-}(tfjs_image_recognition_base_1.NeuralNetwork));
+}(NeuralNetwork_1.NeuralNetwork));
 exports.TinyXception = TinyXception;
 
-},{"../common/depthwiseSeparableConv":212,"./extractParams":312,"./extractParamsFromWeigthMap":313,"@tensorflow/tfjs-core":100,"tfjs-image-recognition-base":372,"tslib":392}],312:[function(require,module,exports){
+},{"../NeuralNetwork":200,"../common":231,"../dom":248,"../ops":336,"../utils":370,"./extractParams":372,"./extractParamsFromWeigthMap":373,"@tensorflow/tfjs-core":100,"tslib":385}],372:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-var tfjs_image_recognition_base_1 = require("tfjs-image-recognition-base");
+var common_1 = require("../common");
+var utils_1 = require("../utils");
 function extractorsFactory(extractWeights, paramMappings) {
-    var extractConvParams = tfjs_image_recognition_base_1.TfjsImageRecognitionBase.extractConvParamsFactory(extractWeights, paramMappings);
-    var extractSeparableConvParams = tfjs_image_recognition_base_1.TfjsImageRecognitionBase.extractSeparableConvParamsFactory(extractWeights, paramMappings);
+    var extractConvParams = common_1.extractConvParamsFactory(extractWeights, paramMappings);
+    var extractSeparableConvParams = common_1.extractSeparableConvParamsFactory(extractWeights, paramMappings);
     function extractReductionBlockParams(channelsIn, channelsOut, mappedPrefix) {
         var separable_conv0 = extractSeparableConvParams(channelsIn, channelsOut, mappedPrefix + "/separable_conv0");
         var separable_conv1 = extractSeparableConvParams(channelsOut, channelsOut, mappedPrefix + "/separable_conv1");
@@ -41417,7 +43900,7 @@ function extractorsFactory(extractWeights, paramMappings) {
 }
 function extractParams(weights, numMainBlocks) {
     var paramMappings = [];
-    var _a = tfjs_image_recognition_base_1.TfjsImageRecognitionBase.extractWeightsFactory(weights), extractWeights = _a.extractWeights, getRemainingWeights = _a.getRemainingWeights;
+    var _a = common_1.extractWeightsFactory(weights), extractWeights = _a.extractWeights, getRemainingWeights = _a.getRemainingWeights;
     var _b = extractorsFactory(extractWeights, paramMappings), extractConvParams = _b.extractConvParams, extractSeparableConvParams = _b.extractSeparableConvParams, extractReductionBlockParams = _b.extractReductionBlockParams, extractMainBlockParams = _b.extractMainBlockParams;
     var entry_flow_conv_in = extractConvParams(3, 32, 3, 'entry_flow/conv_in');
     var entry_flow_reduction_block_0 = extractReductionBlockParams(32, 64, 'entry_flow/reduction_block_0');
@@ -41428,7 +43911,7 @@ function extractParams(weights, numMainBlocks) {
         reduction_block_1: entry_flow_reduction_block_1
     };
     var middle_flow = {};
-    tfjs_image_recognition_base_1.range(numMainBlocks, 0, 1).forEach(function (idx) {
+    utils_1.range(numMainBlocks, 0, 1).forEach(function (idx) {
         middle_flow["main_block_" + idx] = extractMainBlockParams(128, "middle_flow/main_block_" + idx);
     });
     var exit_flow_reduction_block = extractReductionBlockParams(128, 256, 'exit_flow/reduction_block');
@@ -41447,15 +43930,16 @@ function extractParams(weights, numMainBlocks) {
 }
 exports.extractParams = extractParams;
 
-},{"tfjs-image-recognition-base":372}],313:[function(require,module,exports){
+},{"../common":231,"../utils":370}],373:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-var tfjs_image_recognition_base_1 = require("tfjs-image-recognition-base");
+var common_1 = require("../common");
 var loadConvParamsFactory_1 = require("../common/loadConvParamsFactory");
+var utils_1 = require("../utils");
 function loadParamsFactory(weightMap, paramMappings) {
-    var extractWeightEntry = tfjs_image_recognition_base_1.TfjsImageRecognitionBase.extractWeightEntryFactory(weightMap, paramMappings);
+    var extractWeightEntry = common_1.extractWeightEntryFactory(weightMap, paramMappings);
     var extractConvParams = loadConvParamsFactory_1.loadConvParamsFactory(extractWeightEntry);
-    var extractSeparableConvParams = tfjs_image_recognition_base_1.TfjsImageRecognitionBase.loadSeparableConvParamsFactory(extractWeightEntry);
+    var extractSeparableConvParams = common_1.loadSeparableConvParamsFactory(extractWeightEntry);
     function extractReductionBlockParams(mappedPrefix) {
         var separable_conv0 = extractSeparableConvParams(mappedPrefix + "/separable_conv0");
         var separable_conv1 = extractSeparableConvParams(mappedPrefix + "/separable_conv1");
@@ -41487,7 +43971,7 @@ function extractParamsFromWeigthMap(weightMap, numMainBlocks) {
         reduction_block_1: entry_flow_reduction_block_1
     };
     var middle_flow = {};
-    tfjs_image_recognition_base_1.range(numMainBlocks, 0, 1).forEach(function (idx) {
+    utils_1.range(numMainBlocks, 0, 1).forEach(function (idx) {
         middle_flow["main_block_" + idx] = extractMainBlockParams("middle_flow/main_block_" + idx);
     });
     var exit_flow_reduction_block = extractReductionBlockParams('exit_flow/reduction_block');
@@ -41496,12 +43980,12 @@ function extractParamsFromWeigthMap(weightMap, numMainBlocks) {
         reduction_block: exit_flow_reduction_block,
         separable_conv: exit_flow_separable_conv
     };
-    tfjs_image_recognition_base_1.TfjsImageRecognitionBase.disposeUnusedWeightTensors(weightMap, paramMappings);
+    common_1.disposeUnusedWeightTensors(weightMap, paramMappings);
     return { params: { entry_flow: entry_flow, middle_flow: middle_flow, exit_flow: exit_flow }, paramMappings: paramMappings };
 }
 exports.extractParamsFromWeigthMap = extractParamsFromWeigthMap;
 
-},{"../common/loadConvParamsFactory":214,"tfjs-image-recognition-base":372}],314:[function(require,module,exports){
+},{"../common":231,"../common/loadConvParamsFactory":232,"../utils":370}],374:[function(require,module,exports){
 exports.read = function (buffer, offset, isLE, mLen, nBytes) {
   var e, m
   var eLen = (nBytes * 8) - mLen - 1
@@ -41587,7 +44071,7 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
   buffer[offset + i - d] |= s * 128
 }
 
-},{}],315:[function(require,module,exports){
+},{}],375:[function(require,module,exports){
 // shim for using process in browser
 var process = module.exports = {};
 
@@ -41773,7 +44257,7 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],316:[function(require,module,exports){
+},{}],376:[function(require,module,exports){
 // A library of seedable RNGs implemented in Javascript.
 //
 // Usage:
@@ -41835,7 +44319,7 @@ sr.tychei = tychei;
 
 module.exports = sr;
 
-},{"./lib/alea":317,"./lib/tychei":318,"./lib/xor128":319,"./lib/xor4096":320,"./lib/xorshift7":321,"./lib/xorwow":322,"./seedrandom":323}],317:[function(require,module,exports){
+},{"./lib/alea":377,"./lib/tychei":378,"./lib/xor128":379,"./lib/xor4096":380,"./lib/xorshift7":381,"./lib/xorwow":382,"./seedrandom":383}],377:[function(require,module,exports){
 // A port of an algorithm by Johannes Baagøe <baagoe@baagoe.com>, 2010
 // http://baagoe.com/en/RandomMusings/javascript/
 // https://github.com/nquinlan/better-random-numbers-for-javascript-mirror
@@ -41951,7 +44435,7 @@ if (module && module.exports) {
 
 
 
-},{}],318:[function(require,module,exports){
+},{}],378:[function(require,module,exports){
 // A Javascript implementaion of the "Tyche-i" prng algorithm by
 // Samuel Neves and Filipe Araujo.
 // See https://eden.dei.uc.pt/~sneves/pubs/2011-snfa2.pdf
@@ -42056,7 +44540,7 @@ if (module && module.exports) {
 
 
 
-},{}],319:[function(require,module,exports){
+},{}],379:[function(require,module,exports){
 // A Javascript implementaion of the "xor128" prng algorithm by
 // George Marsaglia.  See http://www.jstatsoft.org/v08/i14/paper
 
@@ -42139,7 +44623,7 @@ if (module && module.exports) {
 
 
 
-},{}],320:[function(require,module,exports){
+},{}],380:[function(require,module,exports){
 // A Javascript implementaion of Richard Brent's Xorgens xor4096 algorithm.
 //
 // This fast non-cryptographic random number generator is designed for
@@ -42287,7 +44771,7 @@ if (module && module.exports) {
   (typeof define) == 'function' && define   // present with an AMD loader
 );
 
-},{}],321:[function(require,module,exports){
+},{}],381:[function(require,module,exports){
 // A Javascript implementaion of the "xorshift7" algorithm by
 // François Panneton and Pierre L'ecuyer:
 // "On the Xorgshift Random Number Generators"
@@ -42386,7 +44870,7 @@ if (module && module.exports) {
 );
 
 
-},{}],322:[function(require,module,exports){
+},{}],382:[function(require,module,exports){
 // A Javascript implementaion of the "xorwow" prng algorithm by
 // George Marsaglia.  See http://www.jstatsoft.org/v08/i14/paper
 
@@ -42474,7 +44958,7 @@ if (module && module.exports) {
 
 
 
-},{}],323:[function(require,module,exports){
+},{}],383:[function(require,module,exports){
 /*
 Copyright 2014 David Bau.
 
@@ -42723,2478 +45207,7 @@ if ((typeof module) == 'object' && module.exports) {
   Math    // math: package containing random, pow, and seedrandom
 );
 
-},{"crypto":197}],324:[function(require,module,exports){
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-var tslib_1 = require("tslib");
-var tf = require("@tensorflow/tfjs-core");
-var getModelUris_1 = require("./common/getModelUris");
-var dom_1 = require("./dom");
-var env_1 = require("./env");
-var NeuralNetwork = /** @class */ (function () {
-    function NeuralNetwork(_name) {
-        this._name = _name;
-        this._params = undefined;
-        this._paramMappings = [];
-    }
-    Object.defineProperty(NeuralNetwork.prototype, "params", {
-        get: function () { return this._params; },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(NeuralNetwork.prototype, "paramMappings", {
-        get: function () { return this._paramMappings; },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(NeuralNetwork.prototype, "isLoaded", {
-        get: function () { return !!this.params; },
-        enumerable: true,
-        configurable: true
-    });
-    NeuralNetwork.prototype.getParamFromPath = function (paramPath) {
-        var _a = this.traversePropertyPath(paramPath), obj = _a.obj, objProp = _a.objProp;
-        return obj[objProp];
-    };
-    NeuralNetwork.prototype.reassignParamFromPath = function (paramPath, tensor) {
-        var _a = this.traversePropertyPath(paramPath), obj = _a.obj, objProp = _a.objProp;
-        obj[objProp].dispose();
-        obj[objProp] = tensor;
-    };
-    NeuralNetwork.prototype.getParamList = function () {
-        var _this = this;
-        return this._paramMappings.map(function (_a) {
-            var paramPath = _a.paramPath;
-            return ({
-                path: paramPath,
-                tensor: _this.getParamFromPath(paramPath)
-            });
-        });
-    };
-    NeuralNetwork.prototype.getTrainableParams = function () {
-        return this.getParamList().filter(function (param) { return param.tensor instanceof tf.Variable; });
-    };
-    NeuralNetwork.prototype.getFrozenParams = function () {
-        return this.getParamList().filter(function (param) { return !(param.tensor instanceof tf.Variable); });
-    };
-    NeuralNetwork.prototype.variable = function () {
-        var _this = this;
-        this.getFrozenParams().forEach(function (_a) {
-            var path = _a.path, tensor = _a.tensor;
-            _this.reassignParamFromPath(path, tensor.variable());
-        });
-    };
-    NeuralNetwork.prototype.freeze = function () {
-        var _this = this;
-        this.getTrainableParams().forEach(function (_a) {
-            var path = _a.path, variable = _a.tensor;
-            var tensor = tf.tensor(variable.dataSync());
-            variable.dispose();
-            _this.reassignParamFromPath(path, tensor);
-        });
-    };
-    NeuralNetwork.prototype.dispose = function (throwOnRedispose) {
-        if (throwOnRedispose === void 0) { throwOnRedispose = true; }
-        this.getParamList().forEach(function (param) {
-            if (throwOnRedispose && param.tensor.isDisposed) {
-                throw new Error("param tensor has already been disposed for path " + param.path);
-            }
-            param.tensor.dispose();
-        });
-        this._params = undefined;
-    };
-    NeuralNetwork.prototype.serializeParams = function () {
-        return new Float32Array(this.getParamList()
-            .map(function (_a) {
-            var tensor = _a.tensor;
-            return Array.from(tensor.dataSync());
-        })
-            .reduce(function (flat, arr) { return flat.concat(arr); }));
-    };
-    NeuralNetwork.prototype.load = function (weightsOrUrl) {
-        return tslib_1.__awaiter(this, void 0, void 0, function () {
-            return tslib_1.__generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        if (weightsOrUrl instanceof Float32Array) {
-                            this.extractWeights(weightsOrUrl);
-                            return [2 /*return*/];
-                        }
-                        return [4 /*yield*/, this.loadFromUri(weightsOrUrl)];
-                    case 1:
-                        _a.sent();
-                        return [2 /*return*/];
-                }
-            });
-        });
-    };
-    NeuralNetwork.prototype.loadFromUri = function (uri) {
-        return tslib_1.__awaiter(this, void 0, void 0, function () {
-            var weightMap;
-            return tslib_1.__generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        if (uri && typeof uri !== 'string') {
-                            throw new Error(this._name + ".loadFromUri - expected model uri");
-                        }
-                        return [4 /*yield*/, dom_1.loadWeightMap(uri, this.getDefaultModelName())];
-                    case 1:
-                        weightMap = _a.sent();
-                        this.loadFromWeightMap(weightMap);
-                        return [2 /*return*/];
-                }
-            });
-        });
-    };
-    NeuralNetwork.prototype.loadFromDisk = function (filePath) {
-        return tslib_1.__awaiter(this, void 0, void 0, function () {
-            var readFile, _a, manifestUri, modelBaseUri, fetchWeightsFromDisk, loadWeights, manifest, _b, _c, weightMap;
-            return tslib_1.__generator(this, function (_d) {
-                switch (_d.label) {
-                    case 0:
-                        if (filePath && typeof filePath !== 'string') {
-                            throw new Error(this._name + ".loadFromDisk - expected model file path");
-                        }
-                        readFile = env_1.env.getEnv().readFile;
-                        _a = getModelUris_1.getModelUris(filePath, this.getDefaultModelName()), manifestUri = _a.manifestUri, modelBaseUri = _a.modelBaseUri;
-                        fetchWeightsFromDisk = function (filePaths) { return Promise.all(filePaths.map(function (filePath) { return readFile(filePath).then(function (buf) { return buf.buffer; }); })); };
-                        loadWeights = tf.io.weightsLoaderFactory(fetchWeightsFromDisk);
-                        _c = (_b = JSON).parse;
-                        return [4 /*yield*/, readFile(manifestUri)];
-                    case 1:
-                        manifest = _c.apply(_b, [(_d.sent()).toString()]);
-                        return [4 /*yield*/, loadWeights(manifest, modelBaseUri)];
-                    case 2:
-                        weightMap = _d.sent();
-                        this.loadFromWeightMap(weightMap);
-                        return [2 /*return*/];
-                }
-            });
-        });
-    };
-    NeuralNetwork.prototype.loadFromWeightMap = function (weightMap) {
-        var _a = this.extractParamsFromWeigthMap(weightMap), paramMappings = _a.paramMappings, params = _a.params;
-        this._paramMappings = paramMappings;
-        this._params = params;
-    };
-    NeuralNetwork.prototype.extractWeights = function (weights) {
-        var _a = this.extractParams(weights), paramMappings = _a.paramMappings, params = _a.params;
-        this._paramMappings = paramMappings;
-        this._params = params;
-    };
-    NeuralNetwork.prototype.traversePropertyPath = function (paramPath) {
-        if (!this.params) {
-            throw new Error("traversePropertyPath - model has no loaded params");
-        }
-        var result = paramPath.split('/').reduce(function (res, objProp) {
-            if (!res.nextObj.hasOwnProperty(objProp)) {
-                throw new Error("traversePropertyPath - object does not have property " + objProp + ", for path " + paramPath);
-            }
-            return { obj: res.nextObj, objProp: objProp, nextObj: res.nextObj[objProp] };
-        }, { nextObj: this.params });
-        var obj = result.obj, objProp = result.objProp;
-        if (!obj || !objProp || !(obj[objProp] instanceof tf.Tensor)) {
-            throw new Error("traversePropertyPath - parameter is not a tensor, for path " + paramPath);
-        }
-        return { obj: obj, objProp: objProp };
-    };
-    return NeuralNetwork;
-}());
-exports.NeuralNetwork = NeuralNetwork;
-
-},{"./common/getModelUris":341,"./dom":356,"./env":369,"@tensorflow/tfjs-core":100,"tslib":392}],325:[function(require,module,exports){
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-var tslib_1 = require("tslib");
-var Box_1 = require("./Box");
-var BoundingBox = /** @class */ (function (_super) {
-    tslib_1.__extends(BoundingBox, _super);
-    function BoundingBox(left, top, right, bottom, allowNegativeDimensions) {
-        if (allowNegativeDimensions === void 0) { allowNegativeDimensions = false; }
-        return _super.call(this, { left: left, top: top, right: right, bottom: bottom }, allowNegativeDimensions) || this;
-    }
-    return BoundingBox;
-}(Box_1.Box));
-exports.BoundingBox = BoundingBox;
-
-},{"./Box":326,"tslib":392}],326:[function(require,module,exports){
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-var utils_1 = require("../utils");
-var Point_1 = require("./Point");
-var Box = /** @class */ (function () {
-    function Box(_box, allowNegativeDimensions) {
-        if (allowNegativeDimensions === void 0) { allowNegativeDimensions = true; }
-        var box = (_box || {});
-        var isBbox = [box.left, box.top, box.right, box.bottom].every(utils_1.isValidNumber);
-        var isRect = [box.x, box.y, box.width, box.height].every(utils_1.isValidNumber);
-        if (!isRect && !isBbox) {
-            throw new Error("Box.constructor - expected box to be IBoundingBox | IRect, instead have " + JSON.stringify(box));
-        }
-        var _a = isRect
-            ? [box.x, box.y, box.width, box.height]
-            : [box.left, box.top, box.right - box.left, box.bottom - box.top], x = _a[0], y = _a[1], width = _a[2], height = _a[3];
-        Box.assertIsValidBox({ x: x, y: y, width: width, height: height }, 'Box.constructor', allowNegativeDimensions);
-        this._x = x;
-        this._y = y;
-        this._width = width;
-        this._height = height;
-    }
-    Box.isRect = function (rect) {
-        return !!rect && [rect.x, rect.y, rect.width, rect.height].every(utils_1.isValidNumber);
-    };
-    Box.assertIsValidBox = function (box, callee, allowNegativeDimensions) {
-        if (allowNegativeDimensions === void 0) { allowNegativeDimensions = false; }
-        if (!Box.isRect(box)) {
-            throw new Error(callee + " - invalid box: " + JSON.stringify(box) + ", expected object with properties x, y, width, height");
-        }
-        if (!allowNegativeDimensions && (box.width < 0 || box.height < 0)) {
-            throw new Error(callee + " - width (" + box.width + ") and height (" + box.height + ") must be positive numbers");
-        }
-    };
-    Object.defineProperty(Box.prototype, "x", {
-        get: function () { return this._x; },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(Box.prototype, "y", {
-        get: function () { return this._y; },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(Box.prototype, "width", {
-        get: function () { return this._width; },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(Box.prototype, "height", {
-        get: function () { return this._height; },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(Box.prototype, "left", {
-        get: function () { return this.x; },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(Box.prototype, "top", {
-        get: function () { return this.y; },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(Box.prototype, "right", {
-        get: function () { return this.x + this.width; },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(Box.prototype, "bottom", {
-        get: function () { return this.y + this.height; },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(Box.prototype, "area", {
-        get: function () { return this.width * this.height; },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(Box.prototype, "topLeft", {
-        get: function () { return new Point_1.Point(this.left, this.top); },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(Box.prototype, "topRight", {
-        get: function () { return new Point_1.Point(this.right, this.top); },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(Box.prototype, "bottomLeft", {
-        get: function () { return new Point_1.Point(this.left, this.bottom); },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(Box.prototype, "bottomRight", {
-        get: function () { return new Point_1.Point(this.right, this.bottom); },
-        enumerable: true,
-        configurable: true
-    });
-    Box.prototype.round = function () {
-        var _a = [this.x, this.y, this.width, this.height]
-            .map(function (val) { return Math.round(val); }), x = _a[0], y = _a[1], width = _a[2], height = _a[3];
-        return new Box({ x: x, y: y, width: width, height: height });
-    };
-    Box.prototype.floor = function () {
-        var _a = [this.x, this.y, this.width, this.height]
-            .map(function (val) { return Math.floor(val); }), x = _a[0], y = _a[1], width = _a[2], height = _a[3];
-        return new Box({ x: x, y: y, width: width, height: height });
-    };
-    Box.prototype.toSquare = function () {
-        var _a = this, x = _a.x, y = _a.y, width = _a.width, height = _a.height;
-        var diff = Math.abs(width - height);
-        if (width < height) {
-            x -= (diff / 2);
-            width += diff;
-        }
-        if (height < width) {
-            y -= (diff / 2);
-            height += diff;
-        }
-        return new Box({ x: x, y: y, width: width, height: height });
-    };
-    Box.prototype.rescale = function (s) {
-        var scaleX = utils_1.isDimensions(s) ? s.width : s;
-        var scaleY = utils_1.isDimensions(s) ? s.height : s;
-        return new Box({
-            x: this.x * scaleX,
-            y: this.y * scaleY,
-            width: this.width * scaleX,
-            height: this.height * scaleY
-        });
-    };
-    Box.prototype.pad = function (padX, padY) {
-        var _a = [
-            this.x - (padX / 2),
-            this.y - (padY / 2),
-            this.width + padX,
-            this.height + padY
-        ], x = _a[0], y = _a[1], width = _a[2], height = _a[3];
-        return new Box({ x: x, y: y, width: width, height: height });
-    };
-    Box.prototype.clipAtImageBorders = function (imgWidth, imgHeight) {
-        var _a = this, x = _a.x, y = _a.y, right = _a.right, bottom = _a.bottom;
-        var clippedX = Math.max(x, 0);
-        var clippedY = Math.max(y, 0);
-        var newWidth = right - clippedX;
-        var newHeight = bottom - clippedY;
-        var clippedWidth = Math.min(newWidth, imgWidth - clippedX);
-        var clippedHeight = Math.min(newHeight, imgHeight - clippedY);
-        return (new Box({ x: clippedX, y: clippedY, width: clippedWidth, height: clippedHeight })).floor();
-    };
-    Box.prototype.shift = function (sx, sy) {
-        var _a = this, width = _a.width, height = _a.height;
-        var x = this.x + sx;
-        var y = this.y + sy;
-        return new Box({ x: x, y: y, width: width, height: height });
-    };
-    Box.prototype.padAtBorders = function (imageHeight, imageWidth) {
-        var w = this.width + 1;
-        var h = this.height + 1;
-        var dx = 1;
-        var dy = 1;
-        var edx = w;
-        var edy = h;
-        var x = this.left;
-        var y = this.top;
-        var ex = this.right;
-        var ey = this.bottom;
-        if (ex > imageWidth) {
-            edx = -ex + imageWidth + w;
-            ex = imageWidth;
-        }
-        if (ey > imageHeight) {
-            edy = -ey + imageHeight + h;
-            ey = imageHeight;
-        }
-        if (x < 1) {
-            edy = 2 - x;
-            x = 1;
-        }
-        if (y < 1) {
-            edy = 2 - y;
-            y = 1;
-        }
-        return { dy: dy, edy: edy, dx: dx, edx: edx, y: y, ey: ey, x: x, ex: ex, w: w, h: h };
-    };
-    Box.prototype.calibrate = function (region) {
-        return new Box({
-            left: this.left + (region.left * this.width),
-            top: this.top + (region.top * this.height),
-            right: this.right + (region.right * this.width),
-            bottom: this.bottom + (region.bottom * this.height)
-        }).toSquare().round();
-    };
-    return Box;
-}());
-exports.Box = Box;
-
-},{"../utils":390,"./Point":330}],327:[function(require,module,exports){
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-var utils_1 = require("../utils");
-var Dimensions = /** @class */ (function () {
-    function Dimensions(width, height) {
-        if (!utils_1.isValidNumber(width) || !utils_1.isValidNumber(height)) {
-            throw new Error("Dimensions.constructor - expected width and height to be valid numbers, instead have " + JSON.stringify({ width: width, height: height }));
-        }
-        this._width = width;
-        this._height = height;
-    }
-    Object.defineProperty(Dimensions.prototype, "width", {
-        get: function () { return this._width; },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(Dimensions.prototype, "height", {
-        get: function () { return this._height; },
-        enumerable: true,
-        configurable: true
-    });
-    Dimensions.prototype.reverse = function () {
-        return new Dimensions(1 / this.width, 1 / this.height);
-    };
-    return Dimensions;
-}());
-exports.Dimensions = Dimensions;
-
-},{"../utils":390}],328:[function(require,module,exports){
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-var tslib_1 = require("tslib");
-var Box_1 = require("./Box");
-var index_1 = require("../utils/index");
-var LabeledBox = /** @class */ (function (_super) {
-    tslib_1.__extends(LabeledBox, _super);
-    function LabeledBox(box, label) {
-        var _this = _super.call(this, box) || this;
-        _this._label = label;
-        return _this;
-    }
-    LabeledBox.assertIsValidLabeledBox = function (box, callee) {
-        Box_1.Box.assertIsValidBox(box, callee);
-        if (!index_1.isValidNumber(box.label)) {
-            throw new Error(callee + " - expected property label (" + box.label + ") to be a number");
-        }
-    };
-    Object.defineProperty(LabeledBox.prototype, "label", {
-        get: function () { return this._label; },
-        enumerable: true,
-        configurable: true
-    });
-    return LabeledBox;
-}(Box_1.Box));
-exports.LabeledBox = LabeledBox;
-
-},{"../utils/index":390,"./Box":326,"tslib":392}],329:[function(require,module,exports){
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-var Box_1 = require("./Box");
-var Dimensions_1 = require("./Dimensions");
-var ObjectDetection = /** @class */ (function () {
-    function ObjectDetection(score, classScore, className, relativeBox, imageDims) {
-        this._imageDims = new Dimensions_1.Dimensions(imageDims.width, imageDims.height);
-        this._score = score;
-        this._classScore = classScore;
-        this._className = className;
-        this._box = new Box_1.Box(relativeBox).rescale(this._imageDims);
-    }
-    Object.defineProperty(ObjectDetection.prototype, "score", {
-        get: function () { return this._score; },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(ObjectDetection.prototype, "classScore", {
-        get: function () { return this._classScore; },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(ObjectDetection.prototype, "className", {
-        get: function () { return this._className; },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(ObjectDetection.prototype, "box", {
-        get: function () { return this._box; },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(ObjectDetection.prototype, "imageDims", {
-        get: function () { return this._imageDims; },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(ObjectDetection.prototype, "imageWidth", {
-        get: function () { return this.imageDims.width; },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(ObjectDetection.prototype, "imageHeight", {
-        get: function () { return this.imageDims.height; },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(ObjectDetection.prototype, "relativeBox", {
-        get: function () { return new Box_1.Box(this._box).rescale(this.imageDims.reverse()); },
-        enumerable: true,
-        configurable: true
-    });
-    ObjectDetection.prototype.forSize = function (width, height) {
-        return new ObjectDetection(this.score, this.classScore, this.className, this.relativeBox, { width: width, height: height });
-    };
-    return ObjectDetection;
-}());
-exports.ObjectDetection = ObjectDetection;
-
-},{"./Box":326,"./Dimensions":327}],330:[function(require,module,exports){
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-var Point = /** @class */ (function () {
-    function Point(x, y) {
-        this._x = x;
-        this._y = y;
-    }
-    Object.defineProperty(Point.prototype, "x", {
-        get: function () { return this._x; },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(Point.prototype, "y", {
-        get: function () { return this._y; },
-        enumerable: true,
-        configurable: true
-    });
-    Point.prototype.add = function (pt) {
-        return new Point(this.x + pt.x, this.y + pt.y);
-    };
-    Point.prototype.sub = function (pt) {
-        return new Point(this.x - pt.x, this.y - pt.y);
-    };
-    Point.prototype.mul = function (pt) {
-        return new Point(this.x * pt.x, this.y * pt.y);
-    };
-    Point.prototype.div = function (pt) {
-        return new Point(this.x / pt.x, this.y / pt.y);
-    };
-    Point.prototype.abs = function () {
-        return new Point(Math.abs(this.x), Math.abs(this.y));
-    };
-    Point.prototype.magnitude = function () {
-        return Math.sqrt(Math.pow(this.x, 2) + Math.pow(this.y, 2));
-    };
-    Point.prototype.floor = function () {
-        return new Point(Math.floor(this.x), Math.floor(this.y));
-    };
-    return Point;
-}());
-exports.Point = Point;
-
-},{}],331:[function(require,module,exports){
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-var tslib_1 = require("tslib");
-var utils_1 = require("../utils");
-var LabeledBox_1 = require("./LabeledBox");
-var PredictedBox = /** @class */ (function (_super) {
-    tslib_1.__extends(PredictedBox, _super);
-    function PredictedBox(box, label, score, classScore) {
-        var _this = _super.call(this, box, label) || this;
-        _this._score = score;
-        _this._classScore = classScore;
-        return _this;
-    }
-    PredictedBox.assertIsValidPredictedBox = function (box, callee) {
-        LabeledBox_1.LabeledBox.assertIsValidLabeledBox(box, callee);
-        if (!utils_1.isValidProbablitiy(box.score)
-            || !utils_1.isValidProbablitiy(box.classScore)) {
-            throw new Error(callee + " - expected properties score (" + box.score + ") and (" + box.classScore + ") to be a number between [0, 1]");
-        }
-    };
-    Object.defineProperty(PredictedBox.prototype, "score", {
-        get: function () { return this._score; },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(PredictedBox.prototype, "classScore", {
-        get: function () { return this._classScore; },
-        enumerable: true,
-        configurable: true
-    });
-    return PredictedBox;
-}(LabeledBox_1.LabeledBox));
-exports.PredictedBox = PredictedBox;
-
-},{"../utils":390,"./LabeledBox":328,"tslib":392}],332:[function(require,module,exports){
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-var tslib_1 = require("tslib");
-var Box_1 = require("./Box");
-var Rect = /** @class */ (function (_super) {
-    tslib_1.__extends(Rect, _super);
-    function Rect(x, y, width, height, allowNegativeDimensions) {
-        if (allowNegativeDimensions === void 0) { allowNegativeDimensions = false; }
-        return _super.call(this, { x: x, y: y, width: width, height: height }, allowNegativeDimensions) || this;
-    }
-    return Rect;
-}(Box_1.Box));
-exports.Rect = Rect;
-
-},{"./Box":326,"tslib":392}],333:[function(require,module,exports){
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-var tslib_1 = require("tslib");
-tslib_1.__exportStar(require("./BoundingBox"), exports);
-tslib_1.__exportStar(require("./Box"), exports);
-tslib_1.__exportStar(require("./Dimensions"), exports);
-tslib_1.__exportStar(require("./LabeledBox"), exports);
-tslib_1.__exportStar(require("./ObjectDetection"), exports);
-tslib_1.__exportStar(require("./Point"), exports);
-tslib_1.__exportStar(require("./PredictedBox"), exports);
-tslib_1.__exportStar(require("./Rect"), exports);
-
-},{"./BoundingBox":325,"./Box":326,"./Dimensions":327,"./LabeledBox":328,"./ObjectDetection":329,"./Point":330,"./PredictedBox":331,"./Rect":332,"tslib":392}],334:[function(require,module,exports){
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-var tf = require("@tensorflow/tfjs-core");
-function convLayer(x, params, padding, withRelu) {
-    if (padding === void 0) { padding = 'same'; }
-    if (withRelu === void 0) { withRelu = false; }
-    return tf.tidy(function () {
-        var out = tf.add(tf.conv2d(x, params.filters, [1, 1], padding), params.bias);
-        return withRelu ? tf.relu(out) : out;
-    });
-}
-exports.convLayer = convLayer;
-
-},{"@tensorflow/tfjs-core":100}],335:[function(require,module,exports){
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-function disposeUnusedWeightTensors(weightMap, paramMappings) {
-    Object.keys(weightMap).forEach(function (path) {
-        if (!paramMappings.some(function (pm) { return pm.originalPath === path; })) {
-            weightMap[path].dispose();
-        }
-    });
-}
-exports.disposeUnusedWeightTensors = disposeUnusedWeightTensors;
-
-},{}],336:[function(require,module,exports){
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-var tf = require("@tensorflow/tfjs-core");
-function extractConvParamsFactory(extractWeights, paramMappings) {
-    return function (channelsIn, channelsOut, filterSize, mappedPrefix) {
-        var filters = tf.tensor4d(extractWeights(channelsIn * channelsOut * filterSize * filterSize), [filterSize, filterSize, channelsIn, channelsOut]);
-        var bias = tf.tensor1d(extractWeights(channelsOut));
-        paramMappings.push({ paramPath: mappedPrefix + "/filters" }, { paramPath: mappedPrefix + "/bias" });
-        return { filters: filters, bias: bias };
-    };
-}
-exports.extractConvParamsFactory = extractConvParamsFactory;
-
-},{"@tensorflow/tfjs-core":100}],337:[function(require,module,exports){
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-var tf = require("@tensorflow/tfjs-core");
-function extractFCParamsFactory(extractWeights, paramMappings) {
-    return function (channelsIn, channelsOut, mappedPrefix) {
-        var fc_weights = tf.tensor2d(extractWeights(channelsIn * channelsOut), [channelsIn, channelsOut]);
-        var fc_bias = tf.tensor1d(extractWeights(channelsOut));
-        paramMappings.push({ paramPath: mappedPrefix + "/weights" }, { paramPath: mappedPrefix + "/bias" });
-        return {
-            weights: fc_weights,
-            bias: fc_bias
-        };
-    };
-}
-exports.extractFCParamsFactory = extractFCParamsFactory;
-
-},{"@tensorflow/tfjs-core":100}],338:[function(require,module,exports){
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-var tf = require("@tensorflow/tfjs-core");
-var types_1 = require("./types");
-function extractSeparableConvParamsFactory(extractWeights, paramMappings) {
-    return function (channelsIn, channelsOut, mappedPrefix) {
-        var depthwise_filter = tf.tensor4d(extractWeights(3 * 3 * channelsIn), [3, 3, channelsIn, 1]);
-        var pointwise_filter = tf.tensor4d(extractWeights(channelsIn * channelsOut), [1, 1, channelsIn, channelsOut]);
-        var bias = tf.tensor1d(extractWeights(channelsOut));
-        paramMappings.push({ paramPath: mappedPrefix + "/depthwise_filter" }, { paramPath: mappedPrefix + "/pointwise_filter" }, { paramPath: mappedPrefix + "/bias" });
-        return new types_1.SeparableConvParams(depthwise_filter, pointwise_filter, bias);
-    };
-}
-exports.extractSeparableConvParamsFactory = extractSeparableConvParamsFactory;
-function loadSeparableConvParamsFactory(extractWeightEntry) {
-    return function (prefix) {
-        var depthwise_filter = extractWeightEntry(prefix + "/depthwise_filter", 4);
-        var pointwise_filter = extractWeightEntry(prefix + "/pointwise_filter", 4);
-        var bias = extractWeightEntry(prefix + "/bias", 1);
-        return new types_1.SeparableConvParams(depthwise_filter, pointwise_filter, bias);
-    };
-}
-exports.loadSeparableConvParamsFactory = loadSeparableConvParamsFactory;
-
-},{"./types":343,"@tensorflow/tfjs-core":100}],339:[function(require,module,exports){
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-var utils_1 = require("../utils");
-function extractWeightEntryFactory(weightMap, paramMappings) {
-    return function (originalPath, paramRank, mappedPath) {
-        var tensor = weightMap[originalPath];
-        if (!utils_1.isTensor(tensor, paramRank)) {
-            throw new Error("expected weightMap[" + originalPath + "] to be a Tensor" + paramRank + "D, instead have " + tensor);
-        }
-        paramMappings.push({ originalPath: originalPath, paramPath: mappedPath || originalPath });
-        return tensor;
-    };
-}
-exports.extractWeightEntryFactory = extractWeightEntryFactory;
-
-},{"../utils":390}],340:[function(require,module,exports){
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-function extractWeightsFactory(weights) {
-    var remainingWeights = weights;
-    function extractWeights(numWeights) {
-        var ret = remainingWeights.slice(0, numWeights);
-        remainingWeights = remainingWeights.slice(numWeights);
-        return ret;
-    }
-    function getRemainingWeights() {
-        return remainingWeights;
-    }
-    return {
-        extractWeights: extractWeights,
-        getRemainingWeights: getRemainingWeights
-    };
-}
-exports.extractWeightsFactory = extractWeightsFactory;
-
-},{}],341:[function(require,module,exports){
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-function getModelUris(uri, defaultModelName) {
-    var defaultManifestFilename = defaultModelName + "-weights_manifest.json";
-    if (!uri) {
-        return {
-            modelBaseUri: '',
-            manifestUri: defaultManifestFilename
-        };
-    }
-    if (uri === '/') {
-        return {
-            modelBaseUri: '/',
-            manifestUri: "/" + defaultManifestFilename
-        };
-    }
-    var protocol = uri.startsWith('http://') ? 'http://' : uri.startsWith('https://') ? 'https://' : '';
-    uri = uri.replace(protocol, '');
-    var parts = uri.split('/').filter(function (s) { return s; });
-    var manifestFile = uri.endsWith('.json')
-        ? parts[parts.length - 1]
-        : defaultManifestFilename;
-    var modelBaseUri = protocol + (uri.endsWith('.json') ? parts.slice(0, parts.length - 1) : parts).join('/');
-    modelBaseUri = uri.startsWith('/') ? "/" + modelBaseUri : modelBaseUri;
-    return {
-        modelBaseUri: modelBaseUri,
-        manifestUri: modelBaseUri === '/' ? "/" + manifestFile : modelBaseUri + "/" + manifestFile
-    };
-}
-exports.getModelUris = getModelUris;
-
-},{}],342:[function(require,module,exports){
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-var tslib_1 = require("tslib");
-tslib_1.__exportStar(require("./convLayer"), exports);
-tslib_1.__exportStar(require("./disposeUnusedWeightTensors"), exports);
-tslib_1.__exportStar(require("./extractConvParamsFactory"), exports);
-tslib_1.__exportStar(require("./extractFCParamsFactory"), exports);
-tslib_1.__exportStar(require("./extractSeparableConvParamsFactory"), exports);
-tslib_1.__exportStar(require("./extractWeightEntryFactory"), exports);
-tslib_1.__exportStar(require("./extractWeightsFactory"), exports);
-tslib_1.__exportStar(require("./getModelUris"), exports);
-tslib_1.__exportStar(require("./types"), exports);
-
-},{"./convLayer":334,"./disposeUnusedWeightTensors":335,"./extractConvParamsFactory":336,"./extractFCParamsFactory":337,"./extractSeparableConvParamsFactory":338,"./extractWeightEntryFactory":339,"./extractWeightsFactory":340,"./getModelUris":341,"./types":343,"tslib":392}],343:[function(require,module,exports){
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-var SeparableConvParams = /** @class */ (function () {
-    function SeparableConvParams(depthwise_filter, pointwise_filter, bias) {
-        this.depthwise_filter = depthwise_filter;
-        this.pointwise_filter = pointwise_filter;
-        this.bias = bias;
-    }
-    return SeparableConvParams;
-}());
-exports.SeparableConvParams = SeparableConvParams;
-
-},{}],344:[function(require,module,exports){
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-var tf = require("@tensorflow/tfjs-core");
-var env_1 = require("../env");
-var padToSquare_1 = require("../ops/padToSquare");
-var utils_1 = require("../utils");
-var createCanvas_1 = require("./createCanvas");
-var imageToSquare_1 = require("./imageToSquare");
-var NetInput = /** @class */ (function () {
-    function NetInput(inputs, treatAsBatchInput) {
-        var _this = this;
-        if (treatAsBatchInput === void 0) { treatAsBatchInput = false; }
-        this._imageTensors = [];
-        this._canvases = [];
-        this._treatAsBatchInput = false;
-        this._inputDimensions = [];
-        if (!Array.isArray(inputs)) {
-            throw new Error("NetInput.constructor - expected inputs to be an Array of TResolvedNetInput or to be instanceof tf.Tensor4D, instead have " + inputs);
-        }
-        this._treatAsBatchInput = treatAsBatchInput;
-        this._batchSize = inputs.length;
-        inputs.forEach(function (input, idx) {
-            if (utils_1.isTensor3D(input)) {
-                _this._imageTensors[idx] = input;
-                _this._inputDimensions[idx] = input.shape;
-                return;
-            }
-            if (utils_1.isTensor4D(input)) {
-                var batchSize = input.shape[0];
-                if (batchSize !== 1) {
-                    throw new Error("NetInput - tf.Tensor4D with batchSize " + batchSize + " passed, but not supported in input array");
-                }
-                _this._imageTensors[idx] = input;
-                _this._inputDimensions[idx] = input.shape.slice(1);
-                return;
-            }
-            var canvas = input instanceof env_1.env.getEnv().Canvas ? input : createCanvas_1.createCanvasFromMedia(input);
-            _this._canvases[idx] = canvas;
-            _this._inputDimensions[idx] = [canvas.height, canvas.width, 3];
-        });
-    }
-    Object.defineProperty(NetInput.prototype, "imageTensors", {
-        get: function () {
-            return this._imageTensors;
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(NetInput.prototype, "canvases", {
-        get: function () {
-            return this._canvases;
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(NetInput.prototype, "isBatchInput", {
-        get: function () {
-            return this.batchSize > 1 || this._treatAsBatchInput;
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(NetInput.prototype, "batchSize", {
-        get: function () {
-            return this._batchSize;
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(NetInput.prototype, "inputDimensions", {
-        get: function () {
-            return this._inputDimensions;
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(NetInput.prototype, "inputSize", {
-        get: function () {
-            return this._inputSize;
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(NetInput.prototype, "reshapedInputDimensions", {
-        get: function () {
-            var _this = this;
-            return utils_1.range(this.batchSize, 0, 1).map(function (_, batchIdx) { return _this.getReshapedInputDimensions(batchIdx); });
-        },
-        enumerable: true,
-        configurable: true
-    });
-    NetInput.prototype.getInput = function (batchIdx) {
-        return this.canvases[batchIdx] || this.imageTensors[batchIdx];
-    };
-    NetInput.prototype.getInputDimensions = function (batchIdx) {
-        return this._inputDimensions[batchIdx];
-    };
-    NetInput.prototype.getInputHeight = function (batchIdx) {
-        return this._inputDimensions[batchIdx][0];
-    };
-    NetInput.prototype.getInputWidth = function (batchIdx) {
-        return this._inputDimensions[batchIdx][1];
-    };
-    NetInput.prototype.getReshapedInputDimensions = function (batchIdx) {
-        if (typeof this.inputSize !== 'number') {
-            throw new Error('getReshapedInputDimensions - inputSize not set, toBatchTensor has not been called yet');
-        }
-        var width = this.getInputWidth(batchIdx);
-        var height = this.getInputHeight(batchIdx);
-        return utils_1.computeReshapedDimensions({ width: width, height: height }, this.inputSize);
-    };
-    /**
-     * Create a batch tensor from all input canvases and tensors
-     * with size [batchSize, inputSize, inputSize, 3].
-     *
-     * @param inputSize Height and width of the tensor.
-     * @param isCenterImage (optional, default: false) If true, add an equal amount of padding on
-     * both sides of the minor dimension oof the image.
-     * @returns The batch tensor.
-     */
-    NetInput.prototype.toBatchTensor = function (inputSize, isCenterInputs) {
-        var _this = this;
-        if (isCenterInputs === void 0) { isCenterInputs = true; }
-        this._inputSize = inputSize;
-        return tf.tidy(function () {
-            var inputTensors = utils_1.range(_this.batchSize, 0, 1).map(function (batchIdx) {
-                var input = _this.getInput(batchIdx);
-                if (input instanceof tf.Tensor) {
-                    var imgTensor = utils_1.isTensor4D(input) ? input : input.expandDims();
-                    imgTensor = padToSquare_1.padToSquare(imgTensor, isCenterInputs);
-                    if (imgTensor.shape[1] !== inputSize || imgTensor.shape[2] !== inputSize) {
-                        imgTensor = tf.image.resizeBilinear(imgTensor, [inputSize, inputSize]);
-                    }
-                    return imgTensor.as3D(inputSize, inputSize, 3);
-                }
-                if (input instanceof env_1.env.getEnv().Canvas) {
-                    return tf.browser.fromPixels(imageToSquare_1.imageToSquare(input, inputSize, isCenterInputs));
-                }
-                throw new Error("toBatchTensor - at batchIdx " + batchIdx + ", expected input to be instanceof tf.Tensor or instanceof HTMLCanvasElement, instead have " + input);
-            });
-            var batchTensor = tf.stack(inputTensors.map(function (t) { return t.toFloat(); })).as4D(_this.batchSize, inputSize, inputSize, 3);
-            return batchTensor;
-        });
-    };
-    return NetInput;
-}());
-exports.NetInput = NetInput;
-
-},{"../env":369,"../ops/padToSquare":378,"../utils":390,"./createCanvas":347,"./imageToSquare":355,"@tensorflow/tfjs-core":100}],345:[function(require,module,exports){
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-var env_1 = require("../env");
-var isMediaLoaded_1 = require("./isMediaLoaded");
-function awaitMediaLoaded(media) {
-    return new Promise(function (resolve, reject) {
-        if (media instanceof env_1.env.getEnv().Canvas || isMediaLoaded_1.isMediaLoaded(media)) {
-            return resolve();
-        }
-        function onLoad(e) {
-            if (!e.currentTarget)
-                return;
-            e.currentTarget.removeEventListener('load', onLoad);
-            e.currentTarget.removeEventListener('error', onError);
-            resolve(e);
-        }
-        function onError(e) {
-            if (!e.currentTarget)
-                return;
-            e.currentTarget.removeEventListener('load', onLoad);
-            e.currentTarget.removeEventListener('error', onError);
-            reject(e);
-        }
-        media.addEventListener('load', onLoad);
-        media.addEventListener('error', onError);
-    });
-}
-exports.awaitMediaLoaded = awaitMediaLoaded;
-
-},{"../env":369,"./isMediaLoaded":358}],346:[function(require,module,exports){
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-var env_1 = require("../env");
-function bufferToImage(buf) {
-    return new Promise(function (resolve, reject) {
-        if (!(buf instanceof Blob)) {
-            return reject('bufferToImage - expected buf to be of type: Blob');
-        }
-        var reader = new FileReader();
-        reader.onload = function () {
-            if (typeof reader.result !== 'string') {
-                return reject('bufferToImage - expected reader.result to be a string, in onload');
-            }
-            var img = env_1.env.getEnv().createImageElement();
-            img.onload = function () { return resolve(img); };
-            img.onerror = reject;
-            img.src = reader.result;
-        };
-        reader.onerror = reject;
-        reader.readAsDataURL(buf);
-    });
-}
-exports.bufferToImage = bufferToImage;
-
-},{"../env":369}],347:[function(require,module,exports){
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-var env_1 = require("../env");
-var getContext2dOrThrow_1 = require("./getContext2dOrThrow");
-var getMediaDimensions_1 = require("./getMediaDimensions");
-var isMediaLoaded_1 = require("./isMediaLoaded");
-function createCanvas(_a) {
-    var width = _a.width, height = _a.height;
-    var createCanvasElement = env_1.env.getEnv().createCanvasElement;
-    var canvas = createCanvasElement();
-    canvas.width = width;
-    canvas.height = height;
-    return canvas;
-}
-exports.createCanvas = createCanvas;
-function createCanvasFromMedia(media, dims) {
-    var ImageData = env_1.env.getEnv().ImageData;
-    if (!(media instanceof ImageData) && !isMediaLoaded_1.isMediaLoaded(media)) {
-        throw new Error('createCanvasFromMedia - media has not finished loading yet');
-    }
-    var _a = dims || getMediaDimensions_1.getMediaDimensions(media), width = _a.width, height = _a.height;
-    var canvas = createCanvas({ width: width, height: height });
-    if (media instanceof ImageData) {
-        getContext2dOrThrow_1.getContext2dOrThrow(canvas).putImageData(media, 0, 0);
-    }
-    else {
-        getContext2dOrThrow_1.getContext2dOrThrow(canvas).drawImage(media, 0, 0, width, height);
-    }
-    return canvas;
-}
-exports.createCanvasFromMedia = createCanvasFromMedia;
-
-},{"../env":369,"./getContext2dOrThrow":352,"./getMediaDimensions":353,"./isMediaLoaded":358}],348:[function(require,module,exports){
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-var tslib_1 = require("tslib");
-var bufferToImage_1 = require("./bufferToImage");
-var fetchOrThrow_1 = require("./fetchOrThrow");
-function fetchImage(uri) {
-    return tslib_1.__awaiter(this, void 0, void 0, function () {
-        var res, blob;
-        return tslib_1.__generator(this, function (_a) {
-            switch (_a.label) {
-                case 0: return [4 /*yield*/, fetchOrThrow_1.fetchOrThrow(uri)];
-                case 1:
-                    res = _a.sent();
-                    return [4 /*yield*/, (res).blob()];
-                case 2:
-                    blob = _a.sent();
-                    if (!blob.type.startsWith('image/')) {
-                        throw new Error("fetchImage - expected blob type to be of type image/*, instead have: " + blob.type + ", for url: " + res.url);
-                    }
-                    return [2 /*return*/, bufferToImage_1.bufferToImage(blob)];
-            }
-        });
-    });
-}
-exports.fetchImage = fetchImage;
-
-},{"./bufferToImage":346,"./fetchOrThrow":351,"tslib":392}],349:[function(require,module,exports){
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-var tslib_1 = require("tslib");
-var fetchOrThrow_1 = require("./fetchOrThrow");
-function fetchJson(uri) {
-    return tslib_1.__awaiter(this, void 0, void 0, function () {
-        return tslib_1.__generator(this, function (_a) {
-            switch (_a.label) {
-                case 0: return [4 /*yield*/, fetchOrThrow_1.fetchOrThrow(uri)];
-                case 1: return [2 /*return*/, (_a.sent()).json()];
-            }
-        });
-    });
-}
-exports.fetchJson = fetchJson;
-
-},{"./fetchOrThrow":351,"tslib":392}],350:[function(require,module,exports){
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-var tslib_1 = require("tslib");
-var fetchOrThrow_1 = require("./fetchOrThrow");
-function fetchNetWeights(uri) {
-    return tslib_1.__awaiter(this, void 0, void 0, function () {
-        var _a;
-        return tslib_1.__generator(this, function (_b) {
-            switch (_b.label) {
-                case 0:
-                    _a = Float32Array.bind;
-                    return [4 /*yield*/, fetchOrThrow_1.fetchOrThrow(uri)];
-                case 1: return [4 /*yield*/, (_b.sent()).arrayBuffer()];
-                case 2: return [2 /*return*/, new (_a.apply(Float32Array, [void 0, _b.sent()]))()];
-            }
-        });
-    });
-}
-exports.fetchNetWeights = fetchNetWeights;
-
-},{"./fetchOrThrow":351,"tslib":392}],351:[function(require,module,exports){
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-var tslib_1 = require("tslib");
-var env_1 = require("../env");
-function fetchOrThrow(url, init) {
-    return tslib_1.__awaiter(this, void 0, void 0, function () {
-        var fetch, res;
-        return tslib_1.__generator(this, function (_a) {
-            switch (_a.label) {
-                case 0:
-                    fetch = env_1.env.getEnv().fetch;
-                    return [4 /*yield*/, fetch(url, init)];
-                case 1:
-                    res = _a.sent();
-                    if (!(res.status < 400)) {
-                        throw new Error("failed to fetch: (" + res.status + ") " + res.statusText + ", from url: " + res.url);
-                    }
-                    return [2 /*return*/, res];
-            }
-        });
-    });
-}
-exports.fetchOrThrow = fetchOrThrow;
-
-},{"../env":369,"tslib":392}],352:[function(require,module,exports){
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-var env_1 = require("../env");
-var resolveInput_1 = require("./resolveInput");
-function getContext2dOrThrow(canvasArg) {
-    var _a = env_1.env.getEnv(), Canvas = _a.Canvas, CanvasRenderingContext2D = _a.CanvasRenderingContext2D;
-    if (canvasArg instanceof CanvasRenderingContext2D) {
-        return canvasArg;
-    }
-    var canvas = resolveInput_1.resolveInput(canvasArg);
-    if (!(canvas instanceof Canvas)) {
-        throw new Error('resolveContext2d - expected canvas to be of instance of Canvas');
-    }
-    var ctx = canvas.getContext('2d');
-    if (!ctx) {
-        throw new Error('resolveContext2d - canvas 2d context is null');
-    }
-    return ctx;
-}
-exports.getContext2dOrThrow = getContext2dOrThrow;
-
-},{"../env":369,"./resolveInput":361}],353:[function(require,module,exports){
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-var Dimensions_1 = require("../classes/Dimensions");
-var env_1 = require("../env");
-function getMediaDimensions(input) {
-    var _a = env_1.env.getEnv(), Image = _a.Image, Video = _a.Video;
-    if (input instanceof Image) {
-        return new Dimensions_1.Dimensions(input.naturalWidth, input.naturalHeight);
-    }
-    if (input instanceof Video) {
-        return new Dimensions_1.Dimensions(input.videoWidth, input.videoHeight);
-    }
-    return new Dimensions_1.Dimensions(input.width, input.height);
-}
-exports.getMediaDimensions = getMediaDimensions;
-
-},{"../classes/Dimensions":327,"../env":369}],354:[function(require,module,exports){
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-var tslib_1 = require("tslib");
-var tf = require("@tensorflow/tfjs-core");
-var env_1 = require("../env");
-var utils_1 = require("../utils");
-function imageTensorToCanvas(imgTensor, canvas) {
-    return tslib_1.__awaiter(this, void 0, void 0, function () {
-        var targetCanvas, _a, height, width, numChannels, imgTensor3D;
-        return tslib_1.__generator(this, function (_b) {
-            switch (_b.label) {
-                case 0:
-                    targetCanvas = canvas || env_1.env.getEnv().createCanvasElement();
-                    _a = imgTensor.shape.slice(utils_1.isTensor4D(imgTensor) ? 1 : 0), height = _a[0], width = _a[1], numChannels = _a[2];
-                    imgTensor3D = tf.tidy(function () { return imgTensor.as3D(height, width, numChannels).toInt(); });
-                    return [4 /*yield*/, tf.browser.toPixels(imgTensor3D, targetCanvas)];
-                case 1:
-                    _b.sent();
-                    imgTensor3D.dispose();
-                    return [2 /*return*/, targetCanvas];
-            }
-        });
-    });
-}
-exports.imageTensorToCanvas = imageTensorToCanvas;
-
-},{"../env":369,"../utils":390,"@tensorflow/tfjs-core":100,"tslib":392}],355:[function(require,module,exports){
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-var env_1 = require("../env");
-var createCanvas_1 = require("./createCanvas");
-var getContext2dOrThrow_1 = require("./getContext2dOrThrow");
-var getMediaDimensions_1 = require("./getMediaDimensions");
-function imageToSquare(input, inputSize, centerImage) {
-    if (centerImage === void 0) { centerImage = false; }
-    var _a = env_1.env.getEnv(), Image = _a.Image, Canvas = _a.Canvas;
-    if (!(input instanceof Image || input instanceof Canvas)) {
-        throw new Error('imageToSquare - expected arg0 to be HTMLImageElement | HTMLCanvasElement');
-    }
-    var dims = getMediaDimensions_1.getMediaDimensions(input);
-    var scale = inputSize / Math.max(dims.height, dims.width);
-    var width = scale * dims.width;
-    var height = scale * dims.height;
-    var targetCanvas = createCanvas_1.createCanvas({ width: inputSize, height: inputSize });
-    var inputCanvas = input instanceof Canvas ? input : createCanvas_1.createCanvasFromMedia(input);
-    var offset = Math.abs(width - height) / 2;
-    var dx = centerImage && width < height ? offset : 0;
-    var dy = centerImage && height < width ? offset : 0;
-    getContext2dOrThrow_1.getContext2dOrThrow(targetCanvas).drawImage(inputCanvas, dx, dy, width, height);
-    return targetCanvas;
-}
-exports.imageToSquare = imageToSquare;
-
-},{"../env":369,"./createCanvas":347,"./getContext2dOrThrow":352,"./getMediaDimensions":353}],356:[function(require,module,exports){
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-var tslib_1 = require("tslib");
-tslib_1.__exportStar(require("./awaitMediaLoaded"), exports);
-tslib_1.__exportStar(require("./bufferToImage"), exports);
-tslib_1.__exportStar(require("./createCanvas"), exports);
-tslib_1.__exportStar(require("./fetchImage"), exports);
-tslib_1.__exportStar(require("./fetchJson"), exports);
-tslib_1.__exportStar(require("./fetchNetWeights"), exports);
-tslib_1.__exportStar(require("./fetchOrThrow"), exports);
-tslib_1.__exportStar(require("./getContext2dOrThrow"), exports);
-tslib_1.__exportStar(require("./getMediaDimensions"), exports);
-tslib_1.__exportStar(require("./imageTensorToCanvas"), exports);
-tslib_1.__exportStar(require("./imageToSquare"), exports);
-tslib_1.__exportStar(require("./isMediaElement"), exports);
-tslib_1.__exportStar(require("./isMediaLoaded"), exports);
-tslib_1.__exportStar(require("./loadWeightMap"), exports);
-tslib_1.__exportStar(require("./matchDimensions"), exports);
-tslib_1.__exportStar(require("./NetInput"), exports);
-tslib_1.__exportStar(require("./resolveInput"), exports);
-tslib_1.__exportStar(require("./toNetInput"), exports);
-
-},{"./NetInput":344,"./awaitMediaLoaded":345,"./bufferToImage":346,"./createCanvas":347,"./fetchImage":348,"./fetchJson":349,"./fetchNetWeights":350,"./fetchOrThrow":351,"./getContext2dOrThrow":352,"./getMediaDimensions":353,"./imageTensorToCanvas":354,"./imageToSquare":355,"./isMediaElement":357,"./isMediaLoaded":358,"./loadWeightMap":359,"./matchDimensions":360,"./resolveInput":361,"./toNetInput":362,"tslib":392}],357:[function(require,module,exports){
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-var env_1 = require("../env");
-function isMediaElement(input) {
-    var _a = env_1.env.getEnv(), Image = _a.Image, Canvas = _a.Canvas, Video = _a.Video;
-    return input instanceof Image
-        || input instanceof Canvas
-        || input instanceof Video;
-}
-exports.isMediaElement = isMediaElement;
-
-},{"../env":369}],358:[function(require,module,exports){
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-var env_1 = require("../env");
-function isMediaLoaded(media) {
-    var _a = env_1.env.getEnv(), Image = _a.Image, Video = _a.Video;
-    return (media instanceof Image && media.complete)
-        || (media instanceof Video && media.readyState >= 3);
-}
-exports.isMediaLoaded = isMediaLoaded;
-
-},{"../env":369}],359:[function(require,module,exports){
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-var tslib_1 = require("tslib");
-var tf = require("@tensorflow/tfjs-core");
-var getModelUris_1 = require("../common/getModelUris");
-var fetchJson_1 = require("./fetchJson");
-function loadWeightMap(uri, defaultModelName) {
-    return tslib_1.__awaiter(this, void 0, void 0, function () {
-        var _a, manifestUri, modelBaseUri, manifest;
-        return tslib_1.__generator(this, function (_b) {
-            switch (_b.label) {
-                case 0:
-                    _a = getModelUris_1.getModelUris(uri, defaultModelName), manifestUri = _a.manifestUri, modelBaseUri = _a.modelBaseUri;
-                    return [4 /*yield*/, fetchJson_1.fetchJson(manifestUri)];
-                case 1:
-                    manifest = _b.sent();
-                    return [2 /*return*/, tf.io.loadWeights(manifest, modelBaseUri)];
-            }
-        });
-    });
-}
-exports.loadWeightMap = loadWeightMap;
-
-},{"../common/getModelUris":341,"./fetchJson":349,"@tensorflow/tfjs-core":100,"tslib":392}],360:[function(require,module,exports){
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-var getMediaDimensions_1 = require("./getMediaDimensions");
-function matchDimensions(input, reference, useMediaDimensions) {
-    if (useMediaDimensions === void 0) { useMediaDimensions = false; }
-    var _a = useMediaDimensions
-        ? getMediaDimensions_1.getMediaDimensions(reference)
-        : reference, width = _a.width, height = _a.height;
-    input.width = width;
-    input.height = height;
-    return { width: width, height: height };
-}
-exports.matchDimensions = matchDimensions;
-
-},{"./getMediaDimensions":353}],361:[function(require,module,exports){
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-var env_1 = require("../env");
-function resolveInput(arg) {
-    if (!env_1.env.isNodejs() && typeof arg === 'string') {
-        return document.getElementById(arg);
-    }
-    return arg;
-}
-exports.resolveInput = resolveInput;
-
-},{"../env":369}],362:[function(require,module,exports){
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-var tslib_1 = require("tslib");
-var utils_1 = require("../utils");
-var awaitMediaLoaded_1 = require("./awaitMediaLoaded");
-var isMediaElement_1 = require("./isMediaElement");
-var NetInput_1 = require("./NetInput");
-var resolveInput_1 = require("./resolveInput");
-/**
- * Validates the input to make sure, they are valid net inputs and awaits all media elements
- * to be finished loading.
- *
- * @param input The input, which can be a media element or an array of different media elements.
- * @returns A NetInput instance, which can be passed into one of the neural networks.
- */
-function toNetInput(inputs) {
-    return tslib_1.__awaiter(this, void 0, void 0, function () {
-        var inputArgArray, getIdxHint, inputArray;
-        return tslib_1.__generator(this, function (_a) {
-            switch (_a.label) {
-                case 0:
-                    if (inputs instanceof NetInput_1.NetInput) {
-                        return [2 /*return*/, inputs];
-                    }
-                    inputArgArray = Array.isArray(inputs)
-                        ? inputs
-                        : [inputs];
-                    if (!inputArgArray.length) {
-                        throw new Error('toNetInput - empty array passed as input');
-                    }
-                    getIdxHint = function (idx) { return Array.isArray(inputs) ? " at input index " + idx + ":" : ''; };
-                    inputArray = inputArgArray.map(resolveInput_1.resolveInput);
-                    inputArray.forEach(function (input, i) {
-                        if (!isMediaElement_1.isMediaElement(input) && !utils_1.isTensor3D(input) && !utils_1.isTensor4D(input)) {
-                            if (typeof inputArgArray[i] === 'string') {
-                                throw new Error("toNetInput -" + getIdxHint(i) + " string passed, but could not resolve HTMLElement for element id " + inputArgArray[i]);
-                            }
-                            throw new Error("toNetInput -" + getIdxHint(i) + " expected media to be of type HTMLImageElement | HTMLVideoElement | HTMLCanvasElement | tf.Tensor3D, or to be an element id");
-                        }
-                        if (utils_1.isTensor4D(input)) {
-                            // if tf.Tensor4D is passed in the input array, the batch size has to be 1
-                            var batchSize = input.shape[0];
-                            if (batchSize !== 1) {
-                                throw new Error("toNetInput -" + getIdxHint(i) + " tf.Tensor4D with batchSize " + batchSize + " passed, but not supported in input array");
-                            }
-                        }
-                    });
-                    // wait for all media elements being loaded
-                    return [4 /*yield*/, Promise.all(inputArray.map(function (input) { return isMediaElement_1.isMediaElement(input) && awaitMediaLoaded_1.awaitMediaLoaded(input); }))];
-                case 1:
-                    // wait for all media elements being loaded
-                    _a.sent();
-                    return [2 /*return*/, new NetInput_1.NetInput(inputArray, Array.isArray(inputs))];
-            }
-        });
-    });
-}
-exports.toNetInput = toNetInput;
-
-},{"../utils":390,"./NetInput":344,"./awaitMediaLoaded":345,"./isMediaElement":357,"./resolveInput":361,"tslib":392}],363:[function(require,module,exports){
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-var classes_1 = require("../classes");
-var getContext2dOrThrow_1 = require("../dom/getContext2dOrThrow");
-var DrawTextField_1 = require("./DrawTextField");
-var DrawBoxOptions = /** @class */ (function () {
-    function DrawBoxOptions(options) {
-        if (options === void 0) { options = {}; }
-        var boxColor = options.boxColor, lineWidth = options.lineWidth, label = options.label, drawLabelOptions = options.drawLabelOptions;
-        this.boxColor = boxColor || 'rgba(0, 0, 255, 1)';
-        this.lineWidth = lineWidth || 2;
-        this.label = label;
-        var defaultDrawLabelOptions = {
-            anchorPosition: DrawTextField_1.AnchorPosition.BOTTOM_LEFT,
-            backgroundColor: this.boxColor
-        };
-        this.drawLabelOptions = new DrawTextField_1.DrawTextFieldOptions(Object.assign({}, defaultDrawLabelOptions, drawLabelOptions));
-    }
-    return DrawBoxOptions;
-}());
-exports.DrawBoxOptions = DrawBoxOptions;
-var DrawBox = /** @class */ (function () {
-    function DrawBox(box, options) {
-        if (options === void 0) { options = {}; }
-        this.box = new classes_1.Box(box);
-        this.options = new DrawBoxOptions(options);
-    }
-    DrawBox.prototype.draw = function (canvasArg) {
-        var ctx = getContext2dOrThrow_1.getContext2dOrThrow(canvasArg);
-        var _a = this.options, boxColor = _a.boxColor, lineWidth = _a.lineWidth;
-        var _b = this.box, x = _b.x, y = _b.y, width = _b.width, height = _b.height;
-        ctx.strokeStyle = boxColor;
-        ctx.lineWidth = lineWidth;
-        ctx.strokeRect(x, y, width, height);
-        var label = this.options.label;
-        if (label) {
-            new DrawTextField_1.DrawTextField([label], { x: x - (lineWidth / 2), y: y }, this.options.drawLabelOptions).draw(canvasArg);
-        }
-    };
-    return DrawBox;
-}());
-exports.DrawBox = DrawBox;
-
-},{"../classes":333,"../dom/getContext2dOrThrow":352,"./DrawTextField":364}],364:[function(require,module,exports){
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-var getContext2dOrThrow_1 = require("../dom/getContext2dOrThrow");
-var resolveInput_1 = require("../dom/resolveInput");
-var AnchorPosition;
-(function (AnchorPosition) {
-    AnchorPosition["TOP_LEFT"] = "TOP_LEFT";
-    AnchorPosition["TOP_RIGHT"] = "TOP_RIGHT";
-    AnchorPosition["BOTTOM_LEFT"] = "BOTTOM_LEFT";
-    AnchorPosition["BOTTOM_RIGHT"] = "BOTTOM_RIGHT";
-})(AnchorPosition = exports.AnchorPosition || (exports.AnchorPosition = {}));
-var DrawTextFieldOptions = /** @class */ (function () {
-    function DrawTextFieldOptions(options) {
-        if (options === void 0) { options = {}; }
-        var anchorPosition = options.anchorPosition, backgroundColor = options.backgroundColor, fontColor = options.fontColor, fontSize = options.fontSize, fontStyle = options.fontStyle, padding = options.padding;
-        this.anchorPosition = anchorPosition || AnchorPosition.TOP_LEFT;
-        this.backgroundColor = backgroundColor || 'rgba(0, 0, 0, 0.5)';
-        this.fontColor = fontColor || 'rgba(255, 255, 255, 1)';
-        this.fontSize = fontSize || 14;
-        this.fontStyle = fontStyle || 'Georgia';
-        this.padding = padding || 4;
-    }
-    return DrawTextFieldOptions;
-}());
-exports.DrawTextFieldOptions = DrawTextFieldOptions;
-var DrawTextField = /** @class */ (function () {
-    function DrawTextField(text, anchor, options) {
-        if (options === void 0) { options = {}; }
-        this.text = typeof text === 'string'
-            ? [text]
-            : (text instanceof DrawTextField ? text.text : text);
-        this.anchor = anchor;
-        this.options = new DrawTextFieldOptions(options);
-    }
-    DrawTextField.prototype.measureWidth = function (ctx) {
-        var padding = this.options.padding;
-        return this.text.map(function (l) { return ctx.measureText(l).width; }).reduce(function (w0, w1) { return w0 < w1 ? w1 : w0; }, 0) + (2 * padding);
-    };
-    DrawTextField.prototype.measureHeight = function () {
-        var _a = this.options, fontSize = _a.fontSize, padding = _a.padding;
-        return this.text.length * fontSize + (2 * padding);
-    };
-    DrawTextField.prototype.getUpperLeft = function (ctx, canvasDims) {
-        var anchorPosition = this.options.anchorPosition;
-        var isShiftLeft = anchorPosition === AnchorPosition.BOTTOM_RIGHT || anchorPosition === AnchorPosition.TOP_RIGHT;
-        var isShiftTop = anchorPosition === AnchorPosition.BOTTOM_LEFT || anchorPosition === AnchorPosition.BOTTOM_RIGHT;
-        var textFieldWidth = this.measureWidth(ctx);
-        var textFieldHeight = this.measureHeight();
-        var x = (isShiftLeft ? this.anchor.x - textFieldWidth : this.anchor.x);
-        var y = isShiftTop ? this.anchor.y - textFieldHeight : this.anchor.y;
-        // adjust anchor if text box exceeds canvas borders
-        if (canvasDims) {
-            var width = canvasDims.width, height = canvasDims.height;
-            var newX = Math.max(Math.min(x, width - textFieldWidth), 0);
-            var newY = Math.max(Math.min(y, height - textFieldHeight), 0);
-            return { x: newX, y: newY };
-        }
-        return { x: x, y: y };
-    };
-    DrawTextField.prototype.draw = function (canvasArg) {
-        var canvas = resolveInput_1.resolveInput(canvasArg);
-        var ctx = getContext2dOrThrow_1.getContext2dOrThrow(canvas);
-        var _a = this.options, backgroundColor = _a.backgroundColor, fontColor = _a.fontColor, fontSize = _a.fontSize, fontStyle = _a.fontStyle, padding = _a.padding;
-        ctx.font = fontSize + "px " + fontStyle;
-        var maxTextWidth = this.measureWidth(ctx);
-        var textHeight = this.measureHeight();
-        ctx.fillStyle = backgroundColor;
-        var upperLeft = this.getUpperLeft(ctx, canvas);
-        ctx.fillRect(upperLeft.x, upperLeft.y, maxTextWidth, textHeight);
-        ctx.fillStyle = fontColor;
-        this.text.forEach(function (textLine, i) {
-            var x = padding + upperLeft.x;
-            var y = padding + upperLeft.y + ((i + 1) * fontSize);
-            ctx.fillText(textLine, x, y);
-        });
-    };
-    return DrawTextField;
-}());
-exports.DrawTextField = DrawTextField;
-
-},{"../dom/getContext2dOrThrow":352,"../dom/resolveInput":361}],365:[function(require,module,exports){
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-var tslib_1 = require("tslib");
-tslib_1.__exportStar(require("./DrawBox"), exports);
-tslib_1.__exportStar(require("./DrawTextField"), exports);
-
-},{"./DrawBox":363,"./DrawTextField":364,"tslib":392}],366:[function(require,module,exports){
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-function createBrowserEnv() {
-    var fetch = window['fetch'] || function () {
-        throw new Error('fetch - missing fetch implementation for browser environment');
-    };
-    var readFile = function () {
-        throw new Error('readFile - filesystem not available for browser environment');
-    };
-    return {
-        Canvas: HTMLCanvasElement,
-        CanvasRenderingContext2D: CanvasRenderingContext2D,
-        Image: HTMLImageElement,
-        ImageData: ImageData,
-        Video: HTMLVideoElement,
-        createCanvasElement: function () { return document.createElement('canvas'); },
-        createImageElement: function () { return document.createElement('img'); },
-        fetch: fetch,
-        readFile: readFile
-    };
-}
-exports.createBrowserEnv = createBrowserEnv;
-
-},{}],367:[function(require,module,exports){
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-function createFileSystem(fs) {
-    var requireFsError = '';
-    if (!fs) {
-        try {
-            fs = require('fs');
-        }
-        catch (err) {
-            requireFsError = err.toString();
-        }
-    }
-    var readFile = fs
-        ? function (filePath) {
-            return new Promise(function (res, rej) {
-                fs.readFile(filePath, function (err, buffer) {
-                    return err ? rej(err) : res(buffer);
-                });
-            });
-        }
-        : function () {
-            throw new Error("readFile - failed to require fs in nodejs environment with error: " + requireFsError);
-        };
-    return {
-        readFile: readFile
-    };
-}
-exports.createFileSystem = createFileSystem;
-
-},{"fs":198}],368:[function(require,module,exports){
-(function (global){
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-var tslib_1 = require("tslib");
-var createFileSystem_1 = require("./createFileSystem");
-function createNodejsEnv() {
-    var Canvas = global['Canvas'] || global['HTMLCanvasElement'];
-    var Image = global['Image'] || global['HTMLImageElement'];
-    var createCanvasElement = function () {
-        if (Canvas) {
-            return new Canvas();
-        }
-        throw new Error('createCanvasElement - missing Canvas implementation for nodejs environment');
-    };
-    var createImageElement = function () {
-        if (Image) {
-            return new Image();
-        }
-        throw new Error('createImageElement - missing Image implementation for nodejs environment');
-    };
-    var fetch = global['fetch'] || function () {
-        throw new Error('fetch - missing fetch implementation for nodejs environment');
-    };
-    var fileSystem = createFileSystem_1.createFileSystem();
-    return tslib_1.__assign({ Canvas: Canvas || /** @class */ (function () {
-            function Canvas() {
-            }
-            return Canvas;
-        }()), CanvasRenderingContext2D: global['CanvasRenderingContext2D'] || /** @class */ (function () {
-            function class_1() {
-            }
-            return class_1;
-        }()), Image: Image || /** @class */ (function () {
-            function Image() {
-            }
-            return Image;
-        }()), ImageData: global['ImageData'] || /** @class */ (function () {
-            function class_2() {
-            }
-            return class_2;
-        }()), Video: global['HTMLVideoElement'] || /** @class */ (function () {
-            function class_3() {
-            }
-            return class_3;
-        }()), createCanvasElement: createCanvasElement,
-        createImageElement: createImageElement,
-        fetch: fetch }, fileSystem);
-}
-exports.createNodejsEnv = createNodejsEnv;
-
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./createFileSystem":367,"tslib":392}],369:[function(require,module,exports){
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-var createBrowserEnv_1 = require("./createBrowserEnv");
-var createFileSystem_1 = require("./createFileSystem");
-var createNodejsEnv_1 = require("./createNodejsEnv");
-var isBrowser_1 = require("./isBrowser");
-var isNodejs_1 = require("./isNodejs");
-var environment;
-function getEnv() {
-    if (!environment) {
-        throw new Error('getEnv - environment is not defined, check isNodejs() and isBrowser()');
-    }
-    return environment;
-}
-function setEnv(env) {
-    environment = env;
-}
-function initialize() {
-    // check for isBrowser() first to prevent electron renderer process
-    // to be initialized with wrong environment due to isNodejs() returning true
-    if (isBrowser_1.isBrowser()) {
-        setEnv(createBrowserEnv_1.createBrowserEnv());
-    }
-    if (isNodejs_1.isNodejs()) {
-        setEnv(createNodejsEnv_1.createNodejsEnv());
-    }
-}
-function monkeyPatch(env) {
-    if (!environment) {
-        initialize();
-    }
-    if (!environment) {
-        throw new Error('monkeyPatch - environment is not defined, check isNodejs() and isBrowser()');
-    }
-    var _a = env.Canvas, Canvas = _a === void 0 ? environment.Canvas : _a, _b = env.Image, Image = _b === void 0 ? environment.Image : _b;
-    environment.Canvas = Canvas;
-    environment.Image = Image;
-    environment.createCanvasElement = env.createCanvasElement || (function () { return new Canvas(); });
-    environment.createImageElement = env.createImageElement || (function () { return new Image(); });
-    environment.ImageData = env.ImageData || environment.ImageData;
-    environment.Video = env.Video || environment.Video;
-    environment.fetch = env.fetch || environment.fetch;
-    environment.readFile = env.readFile || environment.readFile;
-}
-exports.env = {
-    getEnv: getEnv,
-    setEnv: setEnv,
-    initialize: initialize,
-    createBrowserEnv: createBrowserEnv_1.createBrowserEnv,
-    createFileSystem: createFileSystem_1.createFileSystem,
-    createNodejsEnv: createNodejsEnv_1.createNodejsEnv,
-    monkeyPatch: monkeyPatch,
-    isBrowser: isBrowser_1.isBrowser,
-    isNodejs: isNodejs_1.isNodejs
-};
-initialize();
-
-},{"./createBrowserEnv":366,"./createFileSystem":367,"./createNodejsEnv":368,"./isBrowser":370,"./isNodejs":371}],370:[function(require,module,exports){
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-function isBrowser() {
-    return typeof window === 'object'
-        && typeof document !== 'undefined'
-        && typeof HTMLImageElement !== 'undefined'
-        && typeof HTMLCanvasElement !== 'undefined'
-        && typeof HTMLVideoElement !== 'undefined'
-        && typeof ImageData !== 'undefined'
-        && typeof CanvasRenderingContext2D !== 'undefined';
-}
-exports.isBrowser = isBrowser;
-
-},{}],371:[function(require,module,exports){
-(function (process,global){
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-function isNodejs() {
-    return typeof global === 'object'
-        && typeof require === 'function'
-        && typeof module !== 'undefined'
-        // issues with gatsby.js: module.exports is undefined
-        // && !!module.exports
-        && typeof process !== 'undefined' && !!process.version;
-}
-exports.isNodejs = isNodejs;
-
-}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"_process":315}],372:[function(require,module,exports){
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-var tslib_1 = require("tslib");
-var draw = require("./draw");
-exports.draw = draw;
-var TfjsImageRecognitionBase = require("./tfjsImageRecognitionBase");
-exports.TfjsImageRecognitionBase = TfjsImageRecognitionBase;
-tslib_1.__exportStar(require("./classes/index"), exports);
-tslib_1.__exportStar(require("./dom/index"), exports);
-tslib_1.__exportStar(require("./env/index"), exports);
-tslib_1.__exportStar(require("./ops/index"), exports);
-tslib_1.__exportStar(require("./utils"), exports);
-tslib_1.__exportStar(require("./NeuralNetwork"), exports);
-
-},{"./NeuralNetwork":324,"./classes/index":333,"./dom/index":356,"./draw":365,"./env/index":369,"./ops/index":373,"./tfjsImageRecognitionBase":380,"./utils":390,"tslib":392}],373:[function(require,module,exports){
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-var tslib_1 = require("tslib");
-tslib_1.__exportStar(require("./iou"), exports);
-tslib_1.__exportStar(require("./minBbox"), exports);
-tslib_1.__exportStar(require("./nonMaxSuppression"), exports);
-tslib_1.__exportStar(require("./normalize"), exports);
-tslib_1.__exportStar(require("./padToSquare"), exports);
-tslib_1.__exportStar(require("./shuffleArray"), exports);
-function sigmoid(x) {
-    return 1 / (1 + Math.exp(-x));
-}
-exports.sigmoid = sigmoid;
-function inverseSigmoid(x) {
-    return Math.log(x / (1 - x));
-}
-exports.inverseSigmoid = inverseSigmoid;
-
-},{"./iou":374,"./minBbox":375,"./nonMaxSuppression":376,"./normalize":377,"./padToSquare":378,"./shuffleArray":379,"tslib":392}],374:[function(require,module,exports){
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-function iou(box1, box2, isIOU) {
-    if (isIOU === void 0) { isIOU = true; }
-    var width = Math.max(0.0, Math.min(box1.right, box2.right) - Math.max(box1.left, box2.left));
-    var height = Math.max(0.0, Math.min(box1.bottom, box2.bottom) - Math.max(box1.top, box2.top));
-    var interSection = width * height;
-    return isIOU
-        ? interSection / (box1.area + box2.area - interSection)
-        : interSection / Math.min(box1.area, box2.area);
-}
-exports.iou = iou;
-
-},{}],375:[function(require,module,exports){
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-var classes_1 = require("../classes");
-function minBbox(pts) {
-    var xs = pts.map(function (pt) { return pt.x; });
-    var ys = pts.map(function (pt) { return pt.y; });
-    var minX = xs.reduce(function (min, x) { return x < min ? x : min; }, Infinity);
-    var minY = ys.reduce(function (min, y) { return y < min ? y : min; }, Infinity);
-    var maxX = xs.reduce(function (max, x) { return max < x ? x : max; }, 0);
-    var maxY = ys.reduce(function (max, y) { return max < y ? y : max; }, 0);
-    return new classes_1.BoundingBox(minX, minY, maxX, maxY);
-}
-exports.minBbox = minBbox;
-
-},{"../classes":333}],376:[function(require,module,exports){
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-var iou_1 = require("./iou");
-function nonMaxSuppression(boxes, scores, iouThreshold, isIOU) {
-    if (isIOU === void 0) { isIOU = true; }
-    var indicesSortedByScore = scores
-        .map(function (score, boxIndex) { return ({ score: score, boxIndex: boxIndex }); })
-        .sort(function (c1, c2) { return c1.score - c2.score; })
-        .map(function (c) { return c.boxIndex; });
-    var pick = [];
-    var _loop_1 = function () {
-        var curr = indicesSortedByScore.pop();
-        pick.push(curr);
-        var indices = indicesSortedByScore;
-        var outputs = [];
-        for (var i = 0; i < indices.length; i++) {
-            var idx = indices[i];
-            var currBox = boxes[curr];
-            var idxBox = boxes[idx];
-            outputs.push(iou_1.iou(currBox, idxBox, isIOU));
-        }
-        indicesSortedByScore = indicesSortedByScore.filter(function (_, j) { return outputs[j] <= iouThreshold; });
-    };
-    while (indicesSortedByScore.length > 0) {
-        _loop_1();
-    }
-    return pick;
-}
-exports.nonMaxSuppression = nonMaxSuppression;
-
-},{"./iou":374}],377:[function(require,module,exports){
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-var tslib_1 = require("tslib");
-var tf = require("@tensorflow/tfjs-core");
-function normalize(x, meanRgb) {
-    return tf.tidy(function () {
-        var r = meanRgb[0], g = meanRgb[1], b = meanRgb[2];
-        var avg_r = tf.fill(tslib_1.__spreadArrays(x.shape.slice(0, 3), [1]), r);
-        var avg_g = tf.fill(tslib_1.__spreadArrays(x.shape.slice(0, 3), [1]), g);
-        var avg_b = tf.fill(tslib_1.__spreadArrays(x.shape.slice(0, 3), [1]), b);
-        var avg_rgb = tf.concat([avg_r, avg_g, avg_b], 3);
-        return tf.sub(x, avg_rgb);
-    });
-}
-exports.normalize = normalize;
-
-},{"@tensorflow/tfjs-core":100,"tslib":392}],378:[function(require,module,exports){
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-var tf = require("@tensorflow/tfjs-core");
-/**
- * Pads the smaller dimension of an image tensor with zeros, such that width === height.
- *
- * @param imgTensor The image tensor.
- * @param isCenterImage (optional, default: false) If true, add an equal amount of padding on
- * both sides of the minor dimension oof the image.
- * @returns The padded tensor with width === height.
- */
-function padToSquare(imgTensor, isCenterImage) {
-    if (isCenterImage === void 0) { isCenterImage = false; }
-    return tf.tidy(function () {
-        var _a = imgTensor.shape.slice(1), height = _a[0], width = _a[1];
-        if (height === width) {
-            return imgTensor;
-        }
-        var dimDiff = Math.abs(height - width);
-        var paddingAmount = Math.round(dimDiff * (isCenterImage ? 0.5 : 1));
-        var paddingAxis = height > width ? 2 : 1;
-        var createPaddingTensor = function (paddingAmount) {
-            var paddingTensorShape = imgTensor.shape.slice();
-            paddingTensorShape[paddingAxis] = paddingAmount;
-            return tf.fill(paddingTensorShape, 0);
-        };
-        var paddingTensorAppend = createPaddingTensor(paddingAmount);
-        var remainingPaddingAmount = dimDiff - paddingTensorAppend.shape[paddingAxis];
-        var paddingTensorPrepend = isCenterImage && remainingPaddingAmount
-            ? createPaddingTensor(remainingPaddingAmount)
-            : null;
-        var tensorsToStack = [
-            paddingTensorPrepend,
-            imgTensor,
-            paddingTensorAppend
-        ]
-            .filter(function (t) { return !!t; })
-            .map(function (t) { return t.toFloat(); });
-        return tf.concat(tensorsToStack, paddingAxis);
-    });
-}
-exports.padToSquare = padToSquare;
-
-},{"@tensorflow/tfjs-core":100}],379:[function(require,module,exports){
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-function shuffleArray(inputArray) {
-    var array = inputArray.slice();
-    for (var i = array.length - 1; i > 0; i--) {
-        var j = Math.floor(Math.random() * (i + 1));
-        var x = array[i];
-        array[i] = array[j];
-        array[j] = x;
-    }
-    return array;
-}
-exports.shuffleArray = shuffleArray;
-
-},{}],380:[function(require,module,exports){
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-var tslib_1 = require("tslib");
-tslib_1.__exportStar(require("./common"), exports);
-tslib_1.__exportStar(require("./tinyYolov2/index"), exports);
-
-},{"./common":342,"./tinyYolov2/index":388,"tslib":392}],381:[function(require,module,exports){
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-var tslib_1 = require("tslib");
-var tf = require("@tensorflow/tfjs-core");
-var BoundingBox_1 = require("../classes/BoundingBox");
-var ObjectDetection_1 = require("../classes/ObjectDetection");
-var common_1 = require("../common");
-var dom_1 = require("../dom");
-var NeuralNetwork_1 = require("../NeuralNetwork");
-var ops_1 = require("../ops");
-var nonMaxSuppression_1 = require("../ops/nonMaxSuppression");
-var normalize_1 = require("../ops/normalize");
-var config_1 = require("./config");
-var convWithBatchNorm_1 = require("./convWithBatchNorm");
-var depthwiseSeparableConv_1 = require("./depthwiseSeparableConv");
-var extractParams_1 = require("./extractParams");
-var extractParamsFromWeigthMap_1 = require("./extractParamsFromWeigthMap");
-var leaky_1 = require("./leaky");
-var TinyYolov2Options_1 = require("./TinyYolov2Options");
-var TinyYolov2 = /** @class */ (function (_super) {
-    tslib_1.__extends(TinyYolov2, _super);
-    function TinyYolov2(config) {
-        var _this = _super.call(this, 'TinyYolov2') || this;
-        config_1.validateConfig(config);
-        _this._config = config;
-        return _this;
-    }
-    Object.defineProperty(TinyYolov2.prototype, "config", {
-        get: function () {
-            return this._config;
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(TinyYolov2.prototype, "withClassScores", {
-        get: function () {
-            return this.config.withClassScores || this.config.classes.length > 1;
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(TinyYolov2.prototype, "boxEncodingSize", {
-        get: function () {
-            return 5 + (this.withClassScores ? this.config.classes.length : 0);
-        },
-        enumerable: true,
-        configurable: true
-    });
-    TinyYolov2.prototype.runTinyYolov2 = function (x, params) {
-        var out = convWithBatchNorm_1.convWithBatchNorm(x, params.conv0);
-        out = tf.maxPool(out, [2, 2], [2, 2], 'same');
-        out = convWithBatchNorm_1.convWithBatchNorm(out, params.conv1);
-        out = tf.maxPool(out, [2, 2], [2, 2], 'same');
-        out = convWithBatchNorm_1.convWithBatchNorm(out, params.conv2);
-        out = tf.maxPool(out, [2, 2], [2, 2], 'same');
-        out = convWithBatchNorm_1.convWithBatchNorm(out, params.conv3);
-        out = tf.maxPool(out, [2, 2], [2, 2], 'same');
-        out = convWithBatchNorm_1.convWithBatchNorm(out, params.conv4);
-        out = tf.maxPool(out, [2, 2], [2, 2], 'same');
-        out = convWithBatchNorm_1.convWithBatchNorm(out, params.conv5);
-        out = tf.maxPool(out, [2, 2], [1, 1], 'same');
-        out = convWithBatchNorm_1.convWithBatchNorm(out, params.conv6);
-        out = convWithBatchNorm_1.convWithBatchNorm(out, params.conv7);
-        return common_1.convLayer(out, params.conv8, 'valid', false);
-    };
-    TinyYolov2.prototype.runMobilenet = function (x, params) {
-        var out = this.config.isFirstLayerConv2d
-            ? leaky_1.leaky(common_1.convLayer(x, params.conv0, 'valid', false))
-            : depthwiseSeparableConv_1.depthwiseSeparableConv(x, params.conv0);
-        out = tf.maxPool(out, [2, 2], [2, 2], 'same');
-        out = depthwiseSeparableConv_1.depthwiseSeparableConv(out, params.conv1);
-        out = tf.maxPool(out, [2, 2], [2, 2], 'same');
-        out = depthwiseSeparableConv_1.depthwiseSeparableConv(out, params.conv2);
-        out = tf.maxPool(out, [2, 2], [2, 2], 'same');
-        out = depthwiseSeparableConv_1.depthwiseSeparableConv(out, params.conv3);
-        out = tf.maxPool(out, [2, 2], [2, 2], 'same');
-        out = depthwiseSeparableConv_1.depthwiseSeparableConv(out, params.conv4);
-        out = tf.maxPool(out, [2, 2], [2, 2], 'same');
-        out = depthwiseSeparableConv_1.depthwiseSeparableConv(out, params.conv5);
-        out = tf.maxPool(out, [2, 2], [1, 1], 'same');
-        out = params.conv6 ? depthwiseSeparableConv_1.depthwiseSeparableConv(out, params.conv6) : out;
-        out = params.conv7 ? depthwiseSeparableConv_1.depthwiseSeparableConv(out, params.conv7) : out;
-        return common_1.convLayer(out, params.conv8, 'valid', false);
-    };
-    TinyYolov2.prototype.forwardInput = function (input, inputSize) {
-        var _this = this;
-        var params = this.params;
-        if (!params) {
-            throw new Error('TinyYolov2 - load model before inference');
-        }
-        return tf.tidy(function () {
-            var batchTensor = input.toBatchTensor(inputSize, false).toFloat();
-            batchTensor = _this.config.meanRgb
-                ? normalize_1.normalize(batchTensor, _this.config.meanRgb)
-                : batchTensor;
-            batchTensor = batchTensor.div(tf.scalar(256));
-            return _this.config.withSeparableConvs
-                ? _this.runMobilenet(batchTensor, params)
-                : _this.runTinyYolov2(batchTensor, params);
-        });
-    };
-    TinyYolov2.prototype.forward = function (input, inputSize) {
-        return tslib_1.__awaiter(this, void 0, void 0, function () {
-            var _a;
-            return tslib_1.__generator(this, function (_b) {
-                switch (_b.label) {
-                    case 0:
-                        _a = this.forwardInput;
-                        return [4 /*yield*/, dom_1.toNetInput(input)];
-                    case 1: return [4 /*yield*/, _a.apply(this, [_b.sent(), inputSize])];
-                    case 2: return [2 /*return*/, _b.sent()];
-                }
-            });
-        });
-    };
-    TinyYolov2.prototype.detect = function (input, forwardParams) {
-        if (forwardParams === void 0) { forwardParams = {}; }
-        return tslib_1.__awaiter(this, void 0, void 0, function () {
-            var _a, inputSize, scoreThreshold, netInput, out, out0, inputDimensions, results, boxes, scores, classScores, classNames, indices, detections;
-            var _this = this;
-            return tslib_1.__generator(this, function (_b) {
-                switch (_b.label) {
-                    case 0:
-                        _a = new TinyYolov2Options_1.TinyYolov2Options(forwardParams), inputSize = _a.inputSize, scoreThreshold = _a.scoreThreshold;
-                        return [4 /*yield*/, dom_1.toNetInput(input)];
-                    case 1:
-                        netInput = _b.sent();
-                        return [4 /*yield*/, this.forwardInput(netInput, inputSize)];
-                    case 2:
-                        out = _b.sent();
-                        out0 = tf.tidy(function () { return tf.unstack(out)[0].expandDims(); });
-                        inputDimensions = {
-                            width: netInput.getInputWidth(0),
-                            height: netInput.getInputHeight(0)
-                        };
-                        return [4 /*yield*/, this.extractBoxes(out0, netInput.getReshapedInputDimensions(0), scoreThreshold)];
-                    case 3:
-                        results = _b.sent();
-                        out.dispose();
-                        out0.dispose();
-                        boxes = results.map(function (res) { return res.box; });
-                        scores = results.map(function (res) { return res.score; });
-                        classScores = results.map(function (res) { return res.classScore; });
-                        classNames = results.map(function (res) { return _this.config.classes[res.label]; });
-                        indices = nonMaxSuppression_1.nonMaxSuppression(boxes.map(function (box) { return box.rescale(inputSize); }), scores, this.config.iouThreshold, true);
-                        detections = indices.map(function (idx) {
-                            return new ObjectDetection_1.ObjectDetection(scores[idx], classScores[idx], classNames[idx], boxes[idx], inputDimensions);
-                        });
-                        return [2 /*return*/, detections];
-                }
-            });
-        });
-    };
-    TinyYolov2.prototype.getDefaultModelName = function () {
-        return '';
-    };
-    TinyYolov2.prototype.extractParamsFromWeigthMap = function (weightMap) {
-        return extractParamsFromWeigthMap_1.extractParamsFromWeigthMap(weightMap, this.config);
-    };
-    TinyYolov2.prototype.extractParams = function (weights) {
-        var filterSizes = this.config.filterSizes || TinyYolov2.DEFAULT_FILTER_SIZES;
-        var numFilters = filterSizes ? filterSizes.length : undefined;
-        if (numFilters !== 7 && numFilters !== 8 && numFilters !== 9) {
-            throw new Error("TinyYolov2 - expected 7 | 8 | 9 convolutional filters, but found " + numFilters + " filterSizes in config");
-        }
-        return extractParams_1.extractParams(weights, this.config, this.boxEncodingSize, filterSizes);
-    };
-    TinyYolov2.prototype.extractBoxes = function (outputTensor, inputBlobDimensions, scoreThreshold) {
-        return tslib_1.__awaiter(this, void 0, void 0, function () {
-            var width, height, inputSize, correctionFactorX, correctionFactorY, numCells, numBoxes, _a, boxesTensor, scoresTensor, classScoresTensor, results, scoresData, boxesData, row, col, anchor, score, ctX, ctY, width_1, height_1, x, y, pos, _b, classScore, label, _c;
-            var _this = this;
-            return tslib_1.__generator(this, function (_d) {
-                switch (_d.label) {
-                    case 0:
-                        width = inputBlobDimensions.width, height = inputBlobDimensions.height;
-                        inputSize = Math.max(width, height);
-                        correctionFactorX = inputSize / width;
-                        correctionFactorY = inputSize / height;
-                        numCells = outputTensor.shape[1];
-                        numBoxes = this.config.anchors.length;
-                        _a = tf.tidy(function () {
-                            var reshaped = outputTensor.reshape([numCells, numCells, numBoxes, _this.boxEncodingSize]);
-                            var boxes = reshaped.slice([0, 0, 0, 0], [numCells, numCells, numBoxes, 4]);
-                            var scores = reshaped.slice([0, 0, 0, 4], [numCells, numCells, numBoxes, 1]);
-                            var classScores = _this.withClassScores
-                                ? tf.softmax(reshaped.slice([0, 0, 0, 5], [numCells, numCells, numBoxes, _this.config.classes.length]), 3)
-                                : tf.scalar(0);
-                            return [boxes, scores, classScores];
-                        }), boxesTensor = _a[0], scoresTensor = _a[1], classScoresTensor = _a[2];
-                        results = [];
-                        return [4 /*yield*/, scoresTensor.array()];
-                    case 1:
-                        scoresData = _d.sent();
-                        return [4 /*yield*/, boxesTensor.array()];
-                    case 2:
-                        boxesData = _d.sent();
-                        row = 0;
-                        _d.label = 3;
-                    case 3:
-                        if (!(row < numCells)) return [3 /*break*/, 12];
-                        col = 0;
-                        _d.label = 4;
-                    case 4:
-                        if (!(col < numCells)) return [3 /*break*/, 11];
-                        anchor = 0;
-                        _d.label = 5;
-                    case 5:
-                        if (!(anchor < numBoxes)) return [3 /*break*/, 10];
-                        score = ops_1.sigmoid(scoresData[row][col][anchor][0]);
-                        if (!(!scoreThreshold || score > scoreThreshold)) return [3 /*break*/, 9];
-                        ctX = ((col + ops_1.sigmoid(boxesData[row][col][anchor][0])) / numCells) * correctionFactorX;
-                        ctY = ((row + ops_1.sigmoid(boxesData[row][col][anchor][1])) / numCells) * correctionFactorY;
-                        width_1 = ((Math.exp(boxesData[row][col][anchor][2]) * this.config.anchors[anchor].x) / numCells) * correctionFactorX;
-                        height_1 = ((Math.exp(boxesData[row][col][anchor][3]) * this.config.anchors[anchor].y) / numCells) * correctionFactorY;
-                        x = (ctX - (width_1 / 2));
-                        y = (ctY - (height_1 / 2));
-                        pos = { row: row, col: col, anchor: anchor };
-                        if (!this.withClassScores) return [3 /*break*/, 7];
-                        return [4 /*yield*/, this.extractPredictedClass(classScoresTensor, pos)];
-                    case 6:
-                        _c = _d.sent();
-                        return [3 /*break*/, 8];
-                    case 7:
-                        _c = { classScore: 1, label: 0 };
-                        _d.label = 8;
-                    case 8:
-                        _b = _c, classScore = _b.classScore, label = _b.label;
-                        results.push(tslib_1.__assign({ box: new BoundingBox_1.BoundingBox(x, y, x + width_1, y + height_1), score: score, classScore: score * classScore, label: label }, pos));
-                        _d.label = 9;
-                    case 9:
-                        anchor++;
-                        return [3 /*break*/, 5];
-                    case 10:
-                        col++;
-                        return [3 /*break*/, 4];
-                    case 11:
-                        row++;
-                        return [3 /*break*/, 3];
-                    case 12:
-                        boxesTensor.dispose();
-                        scoresTensor.dispose();
-                        classScoresTensor.dispose();
-                        return [2 /*return*/, results];
-                }
-            });
-        });
-    };
-    TinyYolov2.prototype.extractPredictedClass = function (classesTensor, pos) {
-        return tslib_1.__awaiter(this, void 0, void 0, function () {
-            var row, col, anchor, classesData;
-            return tslib_1.__generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        row = pos.row, col = pos.col, anchor = pos.anchor;
-                        return [4 /*yield*/, classesTensor.array()];
-                    case 1:
-                        classesData = _a.sent();
-                        return [2 /*return*/, Array(this.config.classes.length).fill(0)
-                                .map(function (_, i) { return classesData[row][col][anchor][i]; })
-                                .map(function (classScore, label) { return ({
-                                classScore: classScore,
-                                label: label
-                            }); })
-                                .reduce(function (max, curr) { return max.classScore > curr.classScore ? max : curr; })];
-                }
-            });
-        });
-    };
-    TinyYolov2.DEFAULT_FILTER_SIZES = [
-        3, 16, 32, 64, 128, 256, 512, 1024, 1024
-    ];
-    return TinyYolov2;
-}(NeuralNetwork_1.NeuralNetwork));
-exports.TinyYolov2 = TinyYolov2;
-
-},{"../NeuralNetwork":324,"../classes/BoundingBox":325,"../classes/ObjectDetection":329,"../common":342,"../dom":356,"../ops":373,"../ops/nonMaxSuppression":376,"../ops/normalize":377,"./TinyYolov2Options":382,"./config":383,"./convWithBatchNorm":384,"./depthwiseSeparableConv":385,"./extractParams":386,"./extractParamsFromWeigthMap":387,"./leaky":389,"@tensorflow/tfjs-core":100,"tslib":392}],382:[function(require,module,exports){
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-var TinyYolov2SizeType;
-(function (TinyYolov2SizeType) {
-    TinyYolov2SizeType[TinyYolov2SizeType["XS"] = 224] = "XS";
-    TinyYolov2SizeType[TinyYolov2SizeType["SM"] = 320] = "SM";
-    TinyYolov2SizeType[TinyYolov2SizeType["MD"] = 416] = "MD";
-    TinyYolov2SizeType[TinyYolov2SizeType["LG"] = 608] = "LG";
-})(TinyYolov2SizeType = exports.TinyYolov2SizeType || (exports.TinyYolov2SizeType = {}));
-var TinyYolov2Options = /** @class */ (function () {
-    function TinyYolov2Options(_a) {
-        var _b = _a === void 0 ? {} : _a, inputSize = _b.inputSize, scoreThreshold = _b.scoreThreshold;
-        this._name = 'TinyYolov2Options';
-        this._inputSize = inputSize || 416;
-        this._scoreThreshold = scoreThreshold || 0.5;
-        if (typeof this._inputSize !== 'number' || this._inputSize % 32 !== 0) {
-            throw new Error(this._name + " - expected inputSize to be a number divisible by 32");
-        }
-        if (typeof this._scoreThreshold !== 'number' || this._scoreThreshold <= 0 || this._scoreThreshold >= 1) {
-            throw new Error(this._name + " - expected scoreThreshold to be a number between 0 and 1");
-        }
-    }
-    Object.defineProperty(TinyYolov2Options.prototype, "inputSize", {
-        get: function () { return this._inputSize; },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(TinyYolov2Options.prototype, "scoreThreshold", {
-        get: function () { return this._scoreThreshold; },
-        enumerable: true,
-        configurable: true
-    });
-    return TinyYolov2Options;
-}());
-exports.TinyYolov2Options = TinyYolov2Options;
-
-},{}],383:[function(require,module,exports){
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-var isNumber = function (arg) { return typeof arg === 'number'; };
-function validateConfig(config) {
-    if (!config) {
-        throw new Error("invalid config: " + config);
-    }
-    if (typeof config.withSeparableConvs !== 'boolean') {
-        throw new Error("config.withSeparableConvs has to be a boolean, have: " + config.withSeparableConvs);
-    }
-    if (!isNumber(config.iouThreshold) || config.iouThreshold < 0 || config.iouThreshold > 1.0) {
-        throw new Error("config.iouThreshold has to be a number between [0, 1], have: " + config.iouThreshold);
-    }
-    if (!Array.isArray(config.classes)
-        || !config.classes.length
-        || !config.classes.every(function (c) { return typeof c === 'string'; })) {
-        throw new Error("config.classes has to be an array class names: string[], have: " + JSON.stringify(config.classes));
-    }
-    if (!Array.isArray(config.anchors)
-        || !config.anchors.length
-        || !config.anchors.map(function (a) { return a || {}; }).every(function (a) { return isNumber(a.x) && isNumber(a.y); })) {
-        throw new Error("config.anchors has to be an array of { x: number, y: number }, have: " + JSON.stringify(config.anchors));
-    }
-    if (config.meanRgb && (!Array.isArray(config.meanRgb)
-        || config.meanRgb.length !== 3
-        || !config.meanRgb.every(isNumber))) {
-        throw new Error("config.meanRgb has to be an array of shape [number, number, number], have: " + JSON.stringify(config.meanRgb));
-    }
-}
-exports.validateConfig = validateConfig;
-
-},{}],384:[function(require,module,exports){
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-var tf = require("@tensorflow/tfjs-core");
-var leaky_1 = require("./leaky");
-function convWithBatchNorm(x, params) {
-    return tf.tidy(function () {
-        var out = tf.pad(x, [[0, 0], [1, 1], [1, 1], [0, 0]]);
-        out = tf.conv2d(out, params.conv.filters, [1, 1], 'valid');
-        out = tf.sub(out, params.bn.sub);
-        out = tf.mul(out, params.bn.truediv);
-        out = tf.add(out, params.conv.bias);
-        return leaky_1.leaky(out);
-    });
-}
-exports.convWithBatchNorm = convWithBatchNorm;
-
-},{"./leaky":389,"@tensorflow/tfjs-core":100}],385:[function(require,module,exports){
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-var tf = require("@tensorflow/tfjs-core");
-var leaky_1 = require("./leaky");
-function depthwiseSeparableConv(x, params) {
-    return tf.tidy(function () {
-        var out = tf.pad(x, [[0, 0], [1, 1], [1, 1], [0, 0]]);
-        out = tf.separableConv2d(out, params.depthwise_filter, params.pointwise_filter, [1, 1], 'valid');
-        out = tf.add(out, params.bias);
-        return leaky_1.leaky(out);
-    });
-}
-exports.depthwiseSeparableConv = depthwiseSeparableConv;
-
-},{"./leaky":389,"@tensorflow/tfjs-core":100}],386:[function(require,module,exports){
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-var tf = require("@tensorflow/tfjs-core");
-var common_1 = require("../common");
-var extractSeparableConvParamsFactory_1 = require("../common/extractSeparableConvParamsFactory");
-var extractWeightsFactory_1 = require("../common/extractWeightsFactory");
-function extractorsFactory(extractWeights, paramMappings) {
-    var extractConvParams = common_1.extractConvParamsFactory(extractWeights, paramMappings);
-    function extractBatchNormParams(size, mappedPrefix) {
-        var sub = tf.tensor1d(extractWeights(size));
-        var truediv = tf.tensor1d(extractWeights(size));
-        paramMappings.push({ paramPath: mappedPrefix + "/sub" }, { paramPath: mappedPrefix + "/truediv" });
-        return { sub: sub, truediv: truediv };
-    }
-    function extractConvWithBatchNormParams(channelsIn, channelsOut, mappedPrefix) {
-        var conv = extractConvParams(channelsIn, channelsOut, 3, mappedPrefix + "/conv");
-        var bn = extractBatchNormParams(channelsOut, mappedPrefix + "/bn");
-        return { conv: conv, bn: bn };
-    }
-    var extractSeparableConvParams = extractSeparableConvParamsFactory_1.extractSeparableConvParamsFactory(extractWeights, paramMappings);
-    return {
-        extractConvParams: extractConvParams,
-        extractConvWithBatchNormParams: extractConvWithBatchNormParams,
-        extractSeparableConvParams: extractSeparableConvParams
-    };
-}
-function extractParams(weights, config, boxEncodingSize, filterSizes) {
-    var _a = extractWeightsFactory_1.extractWeightsFactory(weights), extractWeights = _a.extractWeights, getRemainingWeights = _a.getRemainingWeights;
-    var paramMappings = [];
-    var _b = extractorsFactory(extractWeights, paramMappings), extractConvParams = _b.extractConvParams, extractConvWithBatchNormParams = _b.extractConvWithBatchNormParams, extractSeparableConvParams = _b.extractSeparableConvParams;
-    var params;
-    if (config.withSeparableConvs) {
-        var s0 = filterSizes[0], s1 = filterSizes[1], s2 = filterSizes[2], s3 = filterSizes[3], s4 = filterSizes[4], s5 = filterSizes[5], s6 = filterSizes[6], s7 = filterSizes[7], s8 = filterSizes[8];
-        var conv0 = config.isFirstLayerConv2d
-            ? extractConvParams(s0, s1, 3, 'conv0')
-            : extractSeparableConvParams(s0, s1, 'conv0');
-        var conv1 = extractSeparableConvParams(s1, s2, 'conv1');
-        var conv2 = extractSeparableConvParams(s2, s3, 'conv2');
-        var conv3 = extractSeparableConvParams(s3, s4, 'conv3');
-        var conv4 = extractSeparableConvParams(s4, s5, 'conv4');
-        var conv5 = extractSeparableConvParams(s5, s6, 'conv5');
-        var conv6 = s7 ? extractSeparableConvParams(s6, s7, 'conv6') : undefined;
-        var conv7 = s8 ? extractSeparableConvParams(s7, s8, 'conv7') : undefined;
-        var conv8 = extractConvParams(s8 || s7 || s6, 5 * boxEncodingSize, 1, 'conv8');
-        params = { conv0: conv0, conv1: conv1, conv2: conv2, conv3: conv3, conv4: conv4, conv5: conv5, conv6: conv6, conv7: conv7, conv8: conv8 };
-    }
-    else {
-        var s0 = filterSizes[0], s1 = filterSizes[1], s2 = filterSizes[2], s3 = filterSizes[3], s4 = filterSizes[4], s5 = filterSizes[5], s6 = filterSizes[6], s7 = filterSizes[7], s8 = filterSizes[8];
-        var conv0 = extractConvWithBatchNormParams(s0, s1, 'conv0');
-        var conv1 = extractConvWithBatchNormParams(s1, s2, 'conv1');
-        var conv2 = extractConvWithBatchNormParams(s2, s3, 'conv2');
-        var conv3 = extractConvWithBatchNormParams(s3, s4, 'conv3');
-        var conv4 = extractConvWithBatchNormParams(s4, s5, 'conv4');
-        var conv5 = extractConvWithBatchNormParams(s5, s6, 'conv5');
-        var conv6 = extractConvWithBatchNormParams(s6, s7, 'conv6');
-        var conv7 = extractConvWithBatchNormParams(s7, s8, 'conv7');
-        var conv8 = extractConvParams(s8, 5 * boxEncodingSize, 1, 'conv8');
-        params = { conv0: conv0, conv1: conv1, conv2: conv2, conv3: conv3, conv4: conv4, conv5: conv5, conv6: conv6, conv7: conv7, conv8: conv8 };
-    }
-    if (getRemainingWeights().length !== 0) {
-        throw new Error("weights remaing after extract: " + getRemainingWeights().length);
-    }
-    return { params: params, paramMappings: paramMappings };
-}
-exports.extractParams = extractParams;
-
-},{"../common":342,"../common/extractSeparableConvParamsFactory":338,"../common/extractWeightsFactory":340,"@tensorflow/tfjs-core":100}],387:[function(require,module,exports){
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-var disposeUnusedWeightTensors_1 = require("../common/disposeUnusedWeightTensors");
-var extractSeparableConvParamsFactory_1 = require("../common/extractSeparableConvParamsFactory");
-var extractWeightEntryFactory_1 = require("../common/extractWeightEntryFactory");
-function extractorsFactory(weightMap, paramMappings) {
-    var extractWeightEntry = extractWeightEntryFactory_1.extractWeightEntryFactory(weightMap, paramMappings);
-    function extractBatchNormParams(prefix) {
-        var sub = extractWeightEntry(prefix + "/sub", 1);
-        var truediv = extractWeightEntry(prefix + "/truediv", 1);
-        return { sub: sub, truediv: truediv };
-    }
-    function extractConvParams(prefix) {
-        var filters = extractWeightEntry(prefix + "/filters", 4);
-        var bias = extractWeightEntry(prefix + "/bias", 1);
-        return { filters: filters, bias: bias };
-    }
-    function extractConvWithBatchNormParams(prefix) {
-        var conv = extractConvParams(prefix + "/conv");
-        var bn = extractBatchNormParams(prefix + "/bn");
-        return { conv: conv, bn: bn };
-    }
-    var extractSeparableConvParams = extractSeparableConvParamsFactory_1.loadSeparableConvParamsFactory(extractWeightEntry);
-    return {
-        extractConvParams: extractConvParams,
-        extractConvWithBatchNormParams: extractConvWithBatchNormParams,
-        extractSeparableConvParams: extractSeparableConvParams
-    };
-}
-function extractParamsFromWeigthMap(weightMap, config) {
-    var paramMappings = [];
-    var _a = extractorsFactory(weightMap, paramMappings), extractConvParams = _a.extractConvParams, extractConvWithBatchNormParams = _a.extractConvWithBatchNormParams, extractSeparableConvParams = _a.extractSeparableConvParams;
-    var params;
-    if (config.withSeparableConvs) {
-        var numFilters = (config.filterSizes && config.filterSizes.length || 9);
-        params = {
-            conv0: config.isFirstLayerConv2d ? extractConvParams('conv0') : extractSeparableConvParams('conv0'),
-            conv1: extractSeparableConvParams('conv1'),
-            conv2: extractSeparableConvParams('conv2'),
-            conv3: extractSeparableConvParams('conv3'),
-            conv4: extractSeparableConvParams('conv4'),
-            conv5: extractSeparableConvParams('conv5'),
-            conv6: numFilters > 7 ? extractSeparableConvParams('conv6') : undefined,
-            conv7: numFilters > 8 ? extractSeparableConvParams('conv7') : undefined,
-            conv8: extractConvParams('conv8')
-        };
-    }
-    else {
-        params = {
-            conv0: extractConvWithBatchNormParams('conv0'),
-            conv1: extractConvWithBatchNormParams('conv1'),
-            conv2: extractConvWithBatchNormParams('conv2'),
-            conv3: extractConvWithBatchNormParams('conv3'),
-            conv4: extractConvWithBatchNormParams('conv4'),
-            conv5: extractConvWithBatchNormParams('conv5'),
-            conv6: extractConvWithBatchNormParams('conv6'),
-            conv7: extractConvWithBatchNormParams('conv7'),
-            conv8: extractConvParams('conv8')
-        };
-    }
-    disposeUnusedWeightTensors_1.disposeUnusedWeightTensors(weightMap, paramMappings);
-    return { params: params, paramMappings: paramMappings };
-}
-exports.extractParamsFromWeigthMap = extractParamsFromWeigthMap;
-
-},{"../common/disposeUnusedWeightTensors":335,"../common/extractSeparableConvParamsFactory":338,"../common/extractWeightEntryFactory":339}],388:[function(require,module,exports){
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-var tslib_1 = require("tslib");
-tslib_1.__exportStar(require("./TinyYolov2"), exports);
-tslib_1.__exportStar(require("./TinyYolov2Options"), exports);
-tslib_1.__exportStar(require("./config"), exports);
-
-},{"./TinyYolov2":381,"./TinyYolov2Options":382,"./config":383,"tslib":392}],389:[function(require,module,exports){
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-var tf = require("@tensorflow/tfjs-core");
-function leaky(x) {
-    return tf.tidy(function () {
-        var min = tf.mul(x, tf.scalar(0.10000000149011612));
-        return tf.add(tf.relu(tf.sub(x, min)), min);
-        //return tf.maximum(x, min)
-    });
-}
-exports.leaky = leaky;
-
-},{"@tensorflow/tfjs-core":100}],390:[function(require,module,exports){
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-var tf = require("@tensorflow/tfjs-core");
-var Dimensions_1 = require("../classes/Dimensions");
-var Point_1 = require("../classes/Point");
-function isTensor(tensor, dim) {
-    return tensor instanceof tf.Tensor && tensor.shape.length === dim;
-}
-exports.isTensor = isTensor;
-function isTensor1D(tensor) {
-    return isTensor(tensor, 1);
-}
-exports.isTensor1D = isTensor1D;
-function isTensor2D(tensor) {
-    return isTensor(tensor, 2);
-}
-exports.isTensor2D = isTensor2D;
-function isTensor3D(tensor) {
-    return isTensor(tensor, 3);
-}
-exports.isTensor3D = isTensor3D;
-function isTensor4D(tensor) {
-    return isTensor(tensor, 4);
-}
-exports.isTensor4D = isTensor4D;
-function isFloat(num) {
-    return num % 1 !== 0;
-}
-exports.isFloat = isFloat;
-function isEven(num) {
-    return num % 2 === 0;
-}
-exports.isEven = isEven;
-function round(num, prec) {
-    if (prec === void 0) { prec = 2; }
-    var f = Math.pow(10, prec);
-    return Math.floor(num * f) / f;
-}
-exports.round = round;
-function isDimensions(obj) {
-    return obj && obj.width && obj.height;
-}
-exports.isDimensions = isDimensions;
-function computeReshapedDimensions(_a, inputSize) {
-    var width = _a.width, height = _a.height;
-    var scale = inputSize / Math.max(height, width);
-    return new Dimensions_1.Dimensions(Math.round(width * scale), Math.round(height * scale));
-}
-exports.computeReshapedDimensions = computeReshapedDimensions;
-function getCenterPoint(pts) {
-    return pts.reduce(function (sum, pt) { return sum.add(pt); }, new Point_1.Point(0, 0))
-        .div(new Point_1.Point(pts.length, pts.length));
-}
-exports.getCenterPoint = getCenterPoint;
-function range(num, start, step) {
-    return Array(num).fill(0).map(function (_, i) { return start + (i * step); });
-}
-exports.range = range;
-function isValidNumber(num) {
-    return !!num && num !== Infinity && num !== -Infinity && !isNaN(num) || num === 0;
-}
-exports.isValidNumber = isValidNumber;
-function isValidProbablitiy(num) {
-    return isValidNumber(num) && 0 <= num && num <= 1.0;
-}
-exports.isValidProbablitiy = isValidProbablitiy;
-
-},{"../classes/Dimensions":327,"../classes/Point":330,"@tensorflow/tfjs-core":100}],391:[function(require,module,exports){
+},{"crypto":197}],384:[function(require,module,exports){
 (function (setImmediate,clearImmediate){
 var nextTick = require('process/browser.js').nextTick;
 var apply = Function.prototype.apply;
@@ -45273,22 +45286,23 @@ exports.clearImmediate = typeof clearImmediate === "function" ? clearImmediate :
   delete immediateIds[id];
 };
 }).call(this,require("timers").setImmediate,require("timers").clearImmediate)
-},{"process/browser.js":315,"timers":391}],392:[function(require,module,exports){
+},{"process/browser.js":375,"timers":384}],385:[function(require,module,exports){
 (function (global){
 /*! *****************************************************************************
-Copyright (c) Microsoft Corporation. All rights reserved.
-Licensed under the Apache License, Version 2.0 (the "License"); you may not use
-this file except in compliance with the License. You may obtain a copy of the
-License at http://www.apache.org/licenses/LICENSE-2.0
+Copyright (c) Microsoft Corporation.
 
-THIS CODE IS PROVIDED ON AN *AS IS* BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-KIND, EITHER EXPRESS OR IMPLIED, INCLUDING WITHOUT LIMITATION ANY IMPLIED
-WARRANTIES OR CONDITIONS OF TITLE, FITNESS FOR A PARTICULAR PURPOSE,
-MERCHANTABLITY OR NON-INFRINGEMENT.
+Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby granted.
 
-See the Apache Version 2.0 License for specific language governing permissions
-and limitations under the License.
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+PERFORMANCE OF THIS SOFTWARE.
 ***************************************************************************** */
+
 /* global global, define, System, Reflect, Promise */
 var __extends;
 var __assign;
@@ -45310,6 +45324,9 @@ var __asyncValues;
 var __makeTemplateObject;
 var __importStar;
 var __importDefault;
+var __classPrivateFieldGet;
+var __classPrivateFieldSet;
+var __createBinding;
 (function (factory) {
     var root = typeof global === "object" ? global : typeof self === "object" ? self : typeof this === "object" ? this : {};
     if (typeof define === "function" && define.amd) {
@@ -45380,10 +45397,11 @@ var __importDefault;
     };
 
     __awaiter = function (thisArg, _arguments, P, generator) {
+        function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
         return new (P || (P = Promise))(function (resolve, reject) {
             function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
             function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-            function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
+            function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
             step((generator = generator.apply(thisArg, _arguments || [])).next());
         });
     };
@@ -45416,19 +45434,25 @@ var __importDefault;
         }
     };
 
+    __createBinding = function(o, m, k, k2) {
+        if (k2 === undefined) k2 = k;
+        o[k2] = m[k];
+    };
+
     __exportStar = function (m, exports) {
-        for (var p in m) if (!exports.hasOwnProperty(p)) exports[p] = m[p];
+        for (var p in m) if (p !== "default" && !exports.hasOwnProperty(p)) exports[p] = m[p];
     };
 
     __values = function (o) {
-        var m = typeof Symbol === "function" && o[Symbol.iterator], i = 0;
+        var s = typeof Symbol === "function" && Symbol.iterator, m = s && o[s], i = 0;
         if (m) return m.call(o);
-        return {
+        if (o && typeof o.length === "number") return {
             next: function () {
                 if (o && i >= o.length) o = void 0;
                 return { value: o && o[i++], done: !o };
             }
         };
+        throw new TypeError(s ? "Object is not iterable." : "Symbol.iterator is not defined.");
     };
 
     __read = function (o, n) {
@@ -45509,6 +45533,21 @@ var __importDefault;
         return (mod && mod.__esModule) ? mod : { "default": mod };
     };
 
+    __classPrivateFieldGet = function (receiver, privateMap) {
+        if (!privateMap.has(receiver)) {
+            throw new TypeError("attempted to get private field on non-instance");
+        }
+        return privateMap.get(receiver);
+    };
+
+    __classPrivateFieldSet = function (receiver, privateMap, value) {
+        if (!privateMap.has(receiver)) {
+            throw new TypeError("attempted to set private field on non-instance");
+        }
+        privateMap.set(receiver, value);
+        return value;
+    };
+
     exporter("__extends", __extends);
     exporter("__assign", __assign);
     exporter("__rest", __rest);
@@ -45518,6 +45557,7 @@ var __importDefault;
     exporter("__awaiter", __awaiter);
     exporter("__generator", __generator);
     exporter("__exportStar", __exportStar);
+    exporter("__createBinding", __createBinding);
     exporter("__values", __values);
     exporter("__read", __read);
     exporter("__spread", __spread);
@@ -45529,6 +45569,8 @@ var __importDefault;
     exporter("__makeTemplateObject", __makeTemplateObject);
     exporter("__importStar", __importStar);
     exporter("__importDefault", __importDefault);
+    exporter("__classPrivateFieldGet", __classPrivateFieldGet);
+    exporter("__classPrivateFieldSet", __classPrivateFieldSet);
 });
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
